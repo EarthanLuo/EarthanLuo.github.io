@@ -1,0 +1,253 @@
+---
+title: 线性最小二乘与二次规划问题
+date: 2025-11-19 10:00:00 +0800
+categories: [数学原理, 最优化方法]
+tags: [线性最小二乘, 二次规划]
+math: true
+---
+
+## 第五章 线性最小二乘问题的解法
+
+### 5.1 基本概念
+
+#### 5.1.1 定义
+
+**线性最小二乘问题**是一种优化问题，其目标是最小化**函数值与观测数据**之间的残差平方和。
+
+#### 5.1.2 一般形式
+
+线性最小二乘问题的一般形式可以表示为：
+
+$$
+\min_{x} f(x) = \frac{1}{2}\|Ax - b\|_2^2
+$$
+
+其中，$A \in \mathbb{R}^{m \times n}$是系数矩阵，通常满足$m \geq n$（观测数据数量大于未知参数数量），$b \in \mathbb{R}^m$是观测向量，$x \in \mathbb{R}^n$是待求的未知参数向量。
+
+其中
+
+$$
+r(x)=Ax-b
+$$
+
+叫做残差函数，如果残差函数为线性函数，那么称为线性最小二乘。
+
+$\| \cdot\|_2$ 是 L2 范数，表示为
+
+$$
+\| x\|_2=\sqrt{\sum_{i}{x_i^2}}
+$$
+
+#### 5.1.3 性质
+
+- $A^TA$是半正定矩阵
+- 目标函数$f(x)$是凸函数，因此线性最小二乘问题属于**凸优化问题**
+- 解的存在性与矩阵$A$的秩相关：当$A$列满秩时，存在唯一解；否则存在无穷多解
+
+### 5.2 核心解法
+
+#### 5.2.1 最优解条件
+
+首先这是一个二次函数，当这个二次函数取到最优解时，则其一阶导为 0，所以对目标函数求梯度并令其为零，可推导得到法方程组：
+
+$$
+\nabla f(x)=A^T(Ax-b)=0\\
+A^TAx = A^Tb
+$$
+
+这是求解线性最小二乘问题的基础方程。
+
+#### 5.2.2 唯一解情况
+
+当矩阵$A$列满秩时，$A^TA$是正定矩阵，此时存在唯一解：
+
+$$
+x = (A^TA)^{-1}A^Tb = A^+b
+$$
+
+其中$A^+$表示矩阵$A$的**Moore-Penrose 广义逆**。
+
+> [!NOTE]
+>
+> $A^T A$是正定矩阵，但是$A^T A$不一定可逆。
+
+## 第六章 二次规划
+
+### 6.1 基本概念
+
+#### 6.1.1 定义
+
+**二次规划**是一种特殊的约束优化问题，其**目标函数为二次函数**，**约束函数为线性函数**。
+
+#### 6.1.2 一般形式
+
+二次规划问题的一般形式为：
+
+$$
+\min_x \quad Q(x) = \frac{1}{2}x^TGx + g^Tx
+$$
+
+约束条件包括等式约束和不等式约束：
+
+$$
+\begin{align}
+A^Tx &= b \\
+C^Tx &\geq d
+\end{align}
+$$
+
+其中，$G \in \mathbb{R}^{n \times n}$是二次项系数矩阵，$g \in \mathbb{R}^n$是一次项系数向量，$A$和$C$是约束系数矩阵，$b$和$d$是约束右侧向量。
+
+#### 6.1.3 分类
+
+- **凸二次规划**：当$G$是正半定矩阵时，目标函数为凸函数
+- **非凸二次规划**：当$G$是不定矩阵时，目标函数为非凸函数
+
+### 6.2 等式约束二次规划解法
+
+#### 6.2.1 变量消去法
+
+通过矩阵分块将变量分为基变量和非基变量，代入等式约束，将问题转化为无约束二次规划问题进行求解。
+
+对矩阵 A 做如下分块：
+
+$$
+A^T =
+\begin{bmatrix}
+A_B^T \quad A_N^T
+\end{bmatrix}
+$$
+
+其他分块为
+
+$$
+x=\begin{bmatrix}
+x_B \\ x_N
+\end{bmatrix} ,G=\begin{bmatrix}
+G_{BB} \quad G_{BN} \\
+G_{NB} \quad G_{NN}
+\end{bmatrix} ,g=\begin{bmatrix}
+g_B \\
+g_N
+\end{bmatrix}
+$$
+
+那么等式约束可以写为
+
+$$
+A^T_B x_B + A^T_N x_N = b
+$$
+
+可以解得
+
+$$
+x_B={A^{-1}_B}^{T}(b-A^T_N x_N)={A^{-1}_B}^{T}b-{A^{-1}_B}^{T}A^T_Nx_n
+$$
+
+带入原目标函数，可以得到
+
+$$
+\min_x \quad \hat{Q}(x) = \frac{1}{2}x_N^T\hat{G}x_N + \hat{g}^Tx_N
+$$
+
+这是一个无约束二次函数的优化问题，利用前面的无约束优化方法，可以进行求解。
+
+(1) 如果$\hat{G}$正定，则
+
+$$
+x=\begin{bmatrix}
+x_B \\ x_N
+\end{bmatrix}
+=\begin{bmatrix}
+{A^{-1}_B}^{T}b+{A^{-1}_B}^{T}A^T_N \hat{G}^{-1} \hat{g} \\
+-\hat{G}^{-1} \hat{g}
+\end{bmatrix}
+$$
+
+(2) 如果$\hat{G}$半正定
+
+则根据无约束优化的极小值条件$\nabla f(x) = 0$
+
+$$
+\hat{G}x_N = -\hat{g}
+$$
+
+当$\hat{g} \in R(\hat{G})$时，即
+
+$$
+(I-\hat{G}\hat{G^+})\hat{g}=0
+$$
+
+> [!NOTE]
+>
+> 意思是$\hat{g}$可以被$\hat{G}$中的列向量线性表示，$\hat{G^+}$是$\hat{G}$的广义逆矩阵（伪逆）。
+
+那么解就为
+
+$$
+x_N^* =-\hat{G}^{-1} \hat{g} +(I-\hat{G}\hat{G^+})\tilde{x}
+$$
+
+#### 6.2.2 拉格朗日方法
+
+构造拉格朗日函数：
+
+$$
+L(x, \lambda) = \frac{1}{2}x^TGx + g^Tx + \lambda^T(Ax - b)
+$$
+
+利用 KKT 条件求解最优解
+
+$$
+Gx+g-A \lambda=0 \\
+A^Tx-b=0
+$$
+
+得到增广方程组：
+
+$$
+\begin{bmatrix} G & -A \\ -A^T & 0 \end{bmatrix}\begin{bmatrix} x \\ \lambda \end{bmatrix} = -\begin{bmatrix} g \\ b \end{bmatrix}
+$$
+
+解这个方程即可得到最优解，但是这个最优解可能不唯一。
+
+如果想获得唯一解，则需要满足：
+
+**定理：**假设$A^{n \times m}$为列满秩矩阵，其秩为$m$，设$Z$是由$A^T$空间的一组基组成的矩阵。若投影 Hesse 矩阵$Z^TGZ$正定，则矩阵
+
+$$
+K=\begin{bmatrix} G & -A \\ -A^T & 0 \end{bmatrix}
+$$
+
+非奇异，从而存在唯一的 KKT 矩阵对$(x^*,\lambda^*)$满足方程。
+
+那么解为
+
+$$
+\begin{bmatrix} x^* \\ \lambda^* \end{bmatrix} = -\begin{bmatrix} G & -A \\ -A^T & 0 \end{bmatrix}^{-1}\begin{bmatrix} g \\ b \end{bmatrix}
+$$
+
+求取 KKT 矩阵的逆矩阵分块矩阵为
+
+$$
+\begin{bmatrix} G & -A \\ -A^T & 0 \end{bmatrix}^{-1} = \begin{bmatrix} U & W \\ W^T & -T \end{bmatrix}
+$$
+
+其中
+
+$$
+\begin{align}
+U &= G^{-1}-G^{-1}A(A^TG^{-1}A)^{-1}A^TG^{-1} \\
+W &= -G^{-1}A(A^TGA)^{-1} \\
+T  &= -(A^TG^{-1}A)^{-1}
+\end{align}
+$$
+
+则解表示为
+
+$$
+\begin{align}
+x^* &=-Ug-Wb \\
+\lambda^* &= -W^Tb-Tb
+\end{align}
+$$

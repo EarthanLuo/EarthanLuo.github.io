@@ -1,0 +1,551 @@
+---
+title: 线性搜索
+date: 2025-11-10 10:00:00 +0800
+categories: [数学原理, 最优化方法]
+tags: [线性搜索, 正定二次函数, 步长因子]
+math: true
+---
+
+## 1 正定二次函数（已知$d_k$）
+
+对于一个正定二次函数：
+
+$$
+f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
+$$
+
+第$k$次迭代后，其迭代公式为：
+
+$$
+x_{k+1} = x_{k} + a_k d_k
+$$
+
+要继续迭代，即计算$x_{k+1}$，我们就需要确定：
+
+- 迭代方向$d_k$（本章的主要任务，此处假设已知）。
+- 步长因子$\alpha_k$（需要计算）。
+
+### 1.1 通常计算方法
+
+当选定好迭代方向$d_k$后，需要计算$\alpha_k$：
+
+$$
+\alpha_{k} = \arg_{\alpha} \min \varphi(\alpha)
+$$
+
+根据步长因子视角的正定二次函数表达式：
+
+$$
+\begin{align}
+\varphi(\alpha) = f(x_{k} + \alpha d_k) = \frac{1}{2}(x_{k} + \alpha d_k)^TG (x_{k} + \alpha d_k)+b^T (x_{k} + \alpha d_k)+c \\
+\end{align}
+$$
+
+正常情况下计算$\min \varphi(\alpha)$，需要计算其导数$\varphi^{'}(\alpha)$。
+
+这个方法需要知道：
+
+- 第$k$次迭代后的输入$x_k$（已知）。
+- 迭代方向$d_k$（已知）。
+
+麻烦的点在于代入$H(x_{k+1})$，然后计算其导数：
+
+$$
+\begin{align}
+\varphi'(\alpha) &= (x_k + \alpha d_k)^T G d_k + b^T d_k \\
+\end{align}
+$$
+
+令$\varphi^{'}(\alpha) = 0$，则：
+
+$$
+\begin{align}
+(x_k + \alpha d_k)^T G d_k + b^T d_k &= 0 \\
+
+\end{align}
+$$
+
+很明显这样的方法，其本质也是**精确线性搜索**方法，并且计算过程过于繁琐。
+
+**另一种方法**
+
+当我们通过梯度方法来计算，那么对于一个正定二次函数，第$k$次迭代后，其梯度为：
+
+$$
+\begin{align}
+\boldsymbol g_k =\nabla f(\boldsymbol x_k) &= G\boldsymbol x_k+b \\
+\end{align}
+$$
+
+所以：
+
+$$
+\begin{align}
+\boldsymbol g_{k+1}-\boldsymbol g_{k}&=G\boldsymbol x_{k+1}+b-G\boldsymbol x_{k}-b \\
+&=G(\boldsymbol x_{k+1}-\boldsymbol x_{k}) \\
+&=G\alpha_k \boldsymbol d_k
+\end{align}
+$$
+
+那么其步长应该符合：
+
+$$
+\begin{align}
+\alpha_k &= \frac{\boldsymbol g_{k+1}-\boldsymbol g_{k}}{G \boldsymbol d_k}  \\
+&= \frac{\boldsymbol d_k^T(\boldsymbol g_{k+1}-\boldsymbol g_{k})}{ \boldsymbol d_k^T(G \boldsymbol d_k)}  \\
+&= \frac{\boldsymbol d_k^T\boldsymbol g_{k+1}-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} \\
+\end{align}
+$$
+
+那么一个正定二次函数一般方法计算出的步长为：
+
+$$
+\begin{align}
+\alpha_k &= \frac{\boldsymbol d_k^T\boldsymbol g_{k+1}-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}  \tag{1}
+\end{align}
+$$
+
+在这个方法下，如果想计算$\alpha_k$，就要先获取：
+
+- 迭代方向$d_k$（已知）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
+- 第$k+1$次迭代后的梯度$g_{k+1}$（比较难获取）。
+
+### 1.2 精确线性搜索
+
+如果使用精确线性搜索，那么步长$\alpha_k$应该符合：
+
+$$
+\boldsymbol d_k^T\boldsymbol g_{k+1} =\boldsymbol g_{k+1}^T d_k= 0
+$$
+
+那么使用精确线性搜索计算出的步长为：
+
+$$
+\begin{align}
+\alpha_k &= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}  \tag{2}
+\end{align}
+$$
+
+在这个方法（将上面的方法也变成了**精确线性搜索**）下，如果想计算$\alpha_k$，就要先获取：
+
+- 迭代方向$d_k$（假设已经获取）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
+
+所以，如果在**正定二次函数+精确线性搜索**的情况下，迭代条件是需要知道：
+
+- 第$k$次迭代后的输入$x_k$（已知）。
+- 迭代方向$d_k$（假设已经获取）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
+
+最后的迭代公式为：
+
+$$
+x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k \quad  (正定二次函数+精确线性搜索) \tag{3}
+$$
+
+> [!CAUTION]
+>
+> 后面我们默认使用精确线性搜索来简化步长因子的计算。
+
+## 2 最速下降法
+
+### 2.1 一般函数
+
+#### 2.1.1 迭代方向$d_k$
+
+设目标函数$f(x)$在$x_k$附近连续可导，将$f(x)$在$x_k$处进行一阶$Taylor$展开：
+
+$$
+f(x) = f(x_k) + g_k^T (x-x_k) + o(\| x-x_k \|)
+$$
+
+那么：
+
+$$
+f(x_{k+1}) = f(x_k) + g_k^T (x_{k+1}-x_k) + o(\| x_{k+1}-x_k \|)
+$$
+
+又因为$x_{k+1} = x_k + \alpha_k d_k$即$x_{k+1}-x_{k} = \alpha_k d_k$，所以：
+
+$$
+f(x_{k+1}) = f(x_k) + g_k^T \alpha_k d_k + o(\| \alpha_k d_k \|)
+$$
+
+很显然，因为**确定的步长因子**$\alpha_k > 0$，所以只要$g_k^T d_k < 0$，那么$f(x_{k+1}) < f(x_k)$。
+
+所以$g_k^T $和$d_k$异号。
+
+现在我们就需要使下降的速度最快就行，即$\| g_k^T d_k \|$的值最大。由$Canchy-Schwartz$不等式可知
+
+$$
+\| g_k^T d_k \| \leq \| g_k \|\| d_k \|
+$$
+
+所以当且仅当$d_k=-g_k$，$\| g_k^T d_k \|$的值取到最大。
+
+所以迭代方向为**负梯度方向**。迭代公式为
+
+$$
+x_{k+1}=x_k - \alpha_k g_k
+$$
+
+在这个方法下需要知道：
+
+- 第$k$次迭代后的输入$x_k$（已知）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla H(x_{k})$获得。
+- 步长因子$\alpha_k$（还需计算）。
+
+#### 2.1.2 步长因子$\alpha_k$（精确线性搜索）
+
+这里的精确线性搜索是通过带入$x_{k+1}$后，求导令其等于 0 实现求取$\alpha_k$的，所以属于精确线性搜索（但是需要已知$x_0$和$g_0$，来计算$\alpha_0$）。
+
+初始条件：$x_0$，$f(x)$，计算出$g_0=\nabla f(x_0)$
+
+步骤为：
+
+1. 计算$g_0=\nabla f(x_0)$，代入$x_{1}=x_0 - \alpha g_0$，带入$f(x_1)$得$\varphi(\alpha)$
+2. 计算导数，令$\varphi^{'}(\alpha_0)=0$，计算出$\alpha_0$
+3. 计算$x_{1}=x_0 - \alpha_0 g_0$
+4. 重复以上步骤。
+
+### 2.2 二次函数
+
+根据[1 正定二次函数（已知$d_k$）](#1 正定二次函数（已知$d_k$）)可以知道在**正定二次函数+精确线性搜索**的情况下，迭代公式为：
+
+$$
+x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
+$$
+
+令$d_k=-g_k$，那么迭代公式为：
+
+$$
+\begin{align}
+x_{k+1}&=x_k-\frac{ g_k^T g_{k}}{ g_k^TG g_k} g_k \\
+&=x_k-G^{-1} g_k
+\end{align}
+$$
+
+初始条件：$x_0$，$f(x)$
+
+步骤为：
+
+1. 计算$g_0=\nabla f(x_0)$，计算$G^{-1}$
+2. 计算$x_{k+1}$
+3. 重复以上步骤
+
+## 3 牛顿法
+
+### 3.1 一般函数（精确线性搜索）
+
+设目标函数$f(x)$在$x_k$附近连续可导，则令$\nabla f(x) = g_k$；将$f(x)$在$x_k$处进行二阶$Taylor$展开：
+
+$$
+f(x) = f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TH_k(x-x_k)+ o(\| x-x_k \|)
+$$
+
+设关于$x-x_k$的多项式
+
+$$
+q(x-x_k)= f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TH_k(x-x_k)+ o(\| x-x_k \|)
+$$
+
+当这个多项式取到极小值时，原目标函数取到极小值，所以对该多项式求导（精确线性搜索）：
+
+$$
+q^{'}(x-x_k)=g_k+H_k(x-x_k)=0
+$$
+
+所以迭代公式为
+
+$$
+x_{k+1}=x_k -H^{-1}_k g_k
+$$
+
+其中，$H_k=\nabla f^2(x)$为$f(x)$的$Hesse$矩阵。
+
+**这个方法不依赖迭代方向和步长因子**。
+
+### 3.2 二次函数
+
+对于一个正定二次函数：
+
+$$
+f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
+$$
+
+一阶导数（梯度）：
+
+$$
+g_k = Gx_k+b
+$$
+
+二阶导数（$Hesse$矩阵）：
+
+$$
+H_k = G^T = G
+$$
+
+所以迭代公式为：
+
+$$
+x_{k+1}=x_k -H^{-1}_k g_k =x_k -G^{-1} g_k
+$$
+
+在形式上和**正定二次函数+精确线性搜索+最速下降法**相同。
+
+步骤为：
+
+1. 计算$g_0=\nabla f(x_0)$，计算$G^{-1}$
+2. 计算$x_{k+1}$
+3. 重复以上步骤
+
+## 4 共轭梯度法
+
+共轭条件 1（迭代方向）：
+
+$$
+d_{k-1}^T G d_k=0
+$$
+
+共轭条件 2（梯度方向）：
+
+$$
+\begin{align}
+g_{k-1}^Td_{k-1}^T G d_k g_{k}^T=0 \\
+g_{k-1}^T A g_{k}^T=0
+\end{align}
+$$
+
+### 4.1 一般函数
+
+#### 4.1.1 迭代方向$d_k$
+
+记
+
+$$
+d_k = -g_k +\beta_{k-1} d_{k-1}
+$$
+
+需要知道
+
+- 第$k$次迭代后的梯度$g_k$（当前求得）
+- 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
+- $\beta_{k-1}$（需要求取）
+
+**求取$\beta_{k-1}$**：
+
+$$
+\begin{align}
+d_{k-1}^T Gd_k &= d_{k-1}^T G (-g_k +\beta_{k-1} d_{k-1}) \\
+0&=-d_{k-1}^T G g_k+d_{k-1}^T G \beta_{k-1} d_{k-1} \\
+\beta_{k-1}&=\frac{d_{k-1}^T G g_k}{d_{k-1}^T G d_{k-1}}
+\end{align}
+$$
+
+所以迭代公式为：
+
+$$
+x_{k+1} = x_{k} + \alpha_{k} d_{k}
+$$
+
+需要知道：
+
+- 步长因子$\alpha_k$（**需要求取**）
+- 迭代方向$d_{k}$，如下：
+  - 第$k$次迭代后的梯度$g_k$（当前求得）
+  - 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
+  - $\beta_{k-1}$（**需要求取**）
+
+#### 4.1.2 步长因子$\alpha_k$（精确线性搜索）
+
+这里的精确线性搜索是通过带入$x_{k+1}$后，求导令其等于 0 实现求取$\alpha_k$的，所以属于精确线性搜索（但是需要已知$x_0$和$g_0$，来计算$\alpha_0$）。
+
+初始条件：$x_0$，$f(x)$
+
+1. 先求$d_0$：$d_0=-g_0$
+2. 带入$x_{1}$：$x_{1} = x_{0} + \alpha d_{0}$
+3. 计算$g_1$：$g_1 = \nabla f(x_1)$
+4. 计算$\beta_0$：$\beta_{0}=\frac{d_{0}^T G g_1}{d_{0}^T G d_{0}}$
+5. 计算$d_1$：$d_1 = -g_1 +\beta_{0} d_{0}$
+6. 重复以上步骤。
+
+### 4.2 二次函数
+
+对于一个正定二次函数：
+
+$$
+f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
+$$
+
+根据一阶导数，就有：
+
+$$
+g_k-g_{k-1}=G(x_k-x_{k-1})=G \alpha d_{k-1}
+$$
+
+所以：
+
+$$
+\begin{align}
+\beta_{k-1}&=\frac{g_k^T G d_{k-1}}{d_{k-1}^T G d_{k-1}} \\
+&=\frac{g_k^T (g_k-g_{k-1})}{d_{k-1}^T (g_k-g_{k-1})} \quad(CW公式)\\
+\end{align}
+$$
+
+计算分母：
+
+$$
+\begin{align}
+d_{k-1}^T (g_k-g_{k-1})&=(-g_{k-1} +\beta_{k-2} d_{k-2})^T(g_k-g_{k-1}) \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T G \alpha d_{k-1} \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+ \alpha \beta_{k-2}^T (d^T_{k-2}Gd_{k-1}) \quad (方向共轭)  \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1} \quad (梯度共轭) \\
+&=g_{k-1}^T g_{k-1}
+\end{align}
+$$
+
+计算分子：
+
+$$
+\begin{align}
+g_k^T (g_k-g_{k-1})&=g_k^T g_k-g_k^T g_{k-1}  \quad (梯度共轭) \\
+&=g_k^T g_k
+\end{align}
+$$
+
+所以：
+
+$$
+\beta_{k-1} = \frac{g_k^T g_k}{g_{k-1}^T g_{k-1}} \quad (FR公式)
+$$
+
+与：
+
+$$
+\beta_{k-1} = \frac{g_k^T (g_k-g_{k-1})}{g_{k-1}^T g_{k-1}} \quad (PRP公式)
+$$
+
+基于**正定二次函数+精确线性搜索**：
+
+$$
+x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
+$$
+
+其中：
+
+$$
+\alpha_k = -\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
+$$
+
+需要知道：
+
+- $x_k$
+- $g_k$
+- $d_k$：
+  - 第$k$次迭代后的梯度$g_k$（当前求得）
+  - 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
+  - $\beta_{k-1}$：
+    - 第$k$次迭代后的梯度$g_k$（当前求得）
+    - 第$k-1$次迭代后的梯度$g_{k-1}$（已知）
+- $\alpha_k$
+  - $d_k$
+  - $g_k$
+
+**算法步骤（二次函数+精确线性搜索）**
+
+初始条件：$x_0 \in \mathbb{R}^n$，目标函数 $f(x)$，精度 $\varepsilon > 0$
+
+1. 计算初始梯度 $g_0 = \nabla f(x_0)$，若 $\|g_0\| \leq \varepsilon$，停止并输出 $x_0$；
+
+2. 初始化初始方向 $d_0 = -g_0$；
+
+3. 精确线性搜索求步长：
+   $$
+   \alpha_k = \frac{-d_k^T g_k}{d_k^T G d_k}
+   $$
+
+4. 更新迭代点：$x_{1} = x_0 + \alpha_0 d_0$；
+
+5. 计算新梯度 $g_{1} = \nabla f(x_{1})$，若 $\|g_{k+1}\| \leq \varepsilon$，停止并输出 $x_{1}$；
+
+6. 用 FR 公式（或其他简化公式）计算 $\beta_k$：
+   $$
+   \beta_k = \frac{g_{k+1}^T g_{k+1}}{g_k^T g_k}
+   $$
+
+7. 构造新共轭方向：$d_{k+1} = -g_{k+1} + \beta_k d_k$；
+
+## 5 拟牛顿法（补充完整）
+
+### 5.1 核心原理
+
+拟牛顿法通过构造 Hesse 矩阵的近似 $B_k$（或其逆 $H_k \approx B_k^{-1}$），满足拟牛顿方程 $y_k = B_{k+1} s_k$（或 $H_{k+1} y_k \approx s_k$），其中：
+
+$$
+s_k = x_{k+1} - x_k, \quad y_k = g_{k+1} - g_k
+$$
+
+迭代公式统一为：
+
+$$
+x_{k+1} = x_k - \alpha_k H_k g_k
+$$
+
+（$\alpha_k$ 由精确线性搜索确定）
+
+### 5.2 矩阵矫正方法
+
+#### 5.2.1 秩 1 矫正
+
+矫正公式：
+
+$$
+H_{k+1} = H_k + \frac{(s_k - H_k y_k)(s_k - H_k y_k)^T}{(s_k - H_k y_k)^T y_k}
+$$
+
+其中 $u_k = s_k - H_k y_k$，核心是通过秩 1 修正使 $H_{k+1}$ 满足拟牛顿方程，但无法保证正定性。
+
+#### 5.2.2 DFP 矫正（秩 2 矫正）
+
+矫正公式：
+
+$$
+H_{k+1} = H_k - \frac{H_k y_k y_k^T H_k}{y_k^T H_k y_k} + \frac{s_k s_k^T}{y_k^T s_k}
+$$
+
+性质：若 $H_k$ 正定且 $y_k^T s_k > 0$，则 $H_{k+1}$ 正定，保证搜索方向为下降方向。
+
+#### 5.2.3 BFGS 矫正（秩 2 矫正）
+
+对 Hesse 矩阵 $B_k$ 的矫正公式：
+
+$$
+B_{k+1} = B_k - \frac{B_k s_k s_k^T B_k}{s_k^T B_k s_k} + \frac{y_k y_k^T}{s_k^T y_k}
+$$
+
+若需转换为 $H_{k+1} \approx B_{k+1}^{-1}$，可通过矩阵求逆公式推导，与 DFP 矫正呈对偶关系。
+
+### 5.3 算法步骤（DFP 矫正+精确线性搜索）
+
+初始条件：$x_0 \in \mathbb{R}^n$，目标函数 $f(x)$，精度 $\varepsilon > 0$，初始近似矩阵 $H_0 = I$（单位矩阵）
+
+1. 计算梯度 $g_0 = \nabla f(x_0)$，若 $\|g_0\| \leq \varepsilon$，停止并输出 $x_0$；
+2. 确定搜索方向：$d_0 = -H_0 g_0$；
+3. 精确线性搜索求步长 $\alpha_0$：$\alpha_0 = \arg\min_{\alpha > 0} f(x_0 + \alpha d_0)$；
+4. 更新迭代点：$x_1 = x_0 + \alpha_0 d_0$；
+5. 计算 $s_0 = x_1 - x_0$，$g_1 = \nabla f(x_1)$，$y_0 = g_1 - g_0$；
+6. 若 $\|g_1\| \leq \varepsilon$，停止并输出 $x_1$；
+7. DFP 矫正更新 $H_1$：
+   $$
+   H_1 = H_0 - \frac{H_0 y_0 y_0^T H_0}{y_0^T H_0 y_0} + \frac{s_0 s_0^T}{y_0^T s_0}
+   $$
+8. 令 $k = k+1$，返回步骤 2，重复计算 $d_k = -H_k g_k$ 及后续步骤。
+
+### 5.4 二次函数特例
+
+对于正定二次函数 $f(x) = \frac{1}{2}x^T G x + b^T x + c$，拟牛顿方程精确成立（$y_k = G s_k$，即$B_k=G$），且：
+
+1. DFP 矫正具有二次终止性，至多经过 $n$ 次迭代收敛到最优解。
