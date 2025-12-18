@@ -141,7 +141,7 @@ $$
 \boldsymbol g_k=\nabla H(\boldsymbol x_k) = G\boldsymbol x_k+b
 $$
 
-其步长因子根据[正定二次函数的极小化](#1 正定二次函数的极小化)可以知道为：
+其步长因子根据1 正定二次函数的极小化可以知道为：
 
 $$
 \alpha_k= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
@@ -400,7 +400,7 @@ $$
 
 这和正定二次函数的残量$r(x)=Gx-b$ 一致。
 
-由上面的[正定二次函数的极小化](#1 正定二次函数的极小化)推导，我们可以知道其精确线性搜索的步长因子的显式表示为：
+由上面的1 正定二次函数的极小化推导，我们可以知道其精确线性搜索的步长因子的显式表示为：
 
 $$
 \alpha_k= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
