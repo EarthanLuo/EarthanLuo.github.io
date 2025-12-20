@@ -1,551 +1,675 @@
 ---
-title: 线性搜索
+title: 第三章 线性搜索
 date: 2025-11-10 10:00:00 +0800
 categories: [数学原理, 最优化方法]
 tags: [线性搜索, 正定二次函数, 步长因子]
 math: true
+description: 线性搜索是多变量函数优化的基础，研究在多个决策变量下，寻找目标函数的极值（极大 / 极小），约束条件也可线性或非线性。
 ---
 
-## 1 正定二次函数（已知$d_k$）
+## 多变量函数优化与线性规划
 
-对于一个正定二次函数：
+- **多变量函数最优化**：研究在**多个决策变量**下，寻找目标函数（可以是线性或非线性）的极值（极大 / 极小），约束条件也可线性或非线性。其涵盖的问题类型非常广泛，包括但不限于线性规划、二次规划、非线性规划等。
+- **线性规划**：是多变量最优化的**特殊类型**—— 要求**目标函数和所有约束条件都是线性的**。即仅当多变量最优化问题的 “目标函数 + 约束” 均为线性时，才属于线性规划。
 
-$$
-f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
-$$
+所以前一章研究的是**线性规划**和其最优化方法，本章将其拓展到**多变量函数最优化**和其最优化方法。
 
-第$k$次迭代后，其迭代公式为：
+## 线性搜索与多变量函数优化
 
-$$
-x_{k+1} = x_{k} + a_k d_k
-$$
-
-要继续迭代，即计算$x_{k+1}$，我们就需要确定：
-
-- 迭代方向$d_k$（本章的主要任务，此处假设已知）。
-- 步长因子$\alpha_k$（需要计算）。
-
-### 1.1 通常计算方法
-
-当选定好迭代方向$d_k$后，需要计算$\alpha_k$：
+假设一个多变量函数最优化问题为
 
 $$
-\alpha_{k} = \arg_{\alpha} \min \varphi(\alpha)
+\min \quad f(x)
 $$
 
-根据步长因子视角的正定二次函数表达式：
+同时，取任意一个时刻的变量值$x_k$，当从$x_k$迭代到$x_{k+1}$时，应该满足$f(x_{k+1}) < f(x_k)$，这样$f(x)$才可能最后迭代到最优值。
+
+这样的一个变量迭代过程，写为
 
 $$
-\begin{align}
-\varphi(\alpha) = f(x_{k} + \alpha d_k) = \frac{1}{2}(x_{k} + \alpha d_k)^TG (x_{k} + \alpha d_k)+b^T (x_{k} + \alpha d_k)+c \\
-\end{align}
+x=x_k \rightarrow x=x_{k+1} \\
+即 \quad x_{k+1}=x_k + \Delta x_k
 $$
 
-正常情况下计算$\min \varphi(\alpha)$，需要计算其导数$\varphi^{'}(\alpha)$。
+可见，$x_{k+1}$是一个关于$x_k$的线性函数，增量为$ \Delta x_k$
 
-这个方法需要知道：
-
-- 第$k$次迭代后的输入$x_k$（已知）。
-- 迭代方向$d_k$（已知）。
-
-麻烦的点在于代入$H(x_{k+1})$，然后计算其导数：
+进一步，将变量的迭代格式写为
 
 $$
-\begin{align}
-\varphi'(\alpha) &= (x_k + \alpha d_k)^T G d_k + b^T d_k \\
-\end{align}
+x_{k+1} = x_k + \alpha_k d_k
 $$
 
-令$\varphi^{'}(\alpha) = 0$，则：
+其中
+
+- $\alpha_k$：步长因子，是一个标量。
+- $d_k$：搜索方向，是一个类向量（在线性搜索中是一个向量，在非线性搜索中可能是一个向量函数（多元函数））。
+
+通过以上的推导，就将原最优化问题转换为
 
 $$
-\begin{align}
-(x_k + \alpha d_k)^T G d_k + b^T d_k &= 0 \\
-
-\end{align}
+f(x_k + \alpha_k d_k) < f(x_k)
 $$
 
-很明显这样的方法，其本质也是**精确线性搜索**方法，并且计算过程过于繁琐。
-
-**另一种方法**
-
-当我们通过梯度方法来计算，那么对于一个正定二次函数，第$k$次迭代后，其梯度为：
+又因为$x_k$是一个多变量的向量，所以我们希望，当步长$\alpha_k$,确定时，搜索方向$d_k$的选取能够让$f(x_k + \alpha_k d_k)$取到最小，这样每次迭代的结果都是多变量函数$f$的最小值。这样就得到一个新的最优化问题
 
 $$
-\begin{align}
-\boldsymbol g_k =\nabla f(\boldsymbol x_k) &= G\boldsymbol x_k+b \\
-\end{align}
+\min \quad \varphi(d)=f(x_k + \alpha_k d)
 $$
 
-所以：
+同样的，我们也希望，当搜索方向$d_k$确定时，步长的选取能够让$f(x_k + \alpha_k d_k)$沿搜索方向取到最小。新的最优化问题为
 
 $$
-\begin{align}
-\boldsymbol g_{k+1}-\boldsymbol g_{k}&=G\boldsymbol x_{k+1}+b-G\boldsymbol x_{k}-b \\
-&=G(\boldsymbol x_{k+1}-\boldsymbol x_{k}) \\
-&=G\alpha_k \boldsymbol d_k
-\end{align}
+\min \quad \varphi(\alpha)=f(x_k + \alpha d_k)
 $$
 
-那么其步长应该符合：
+那么我们得到**线性搜索的定义**：
+
+- 规定线性搜索的范围为一条固定方向的直线（类似射线），这是其线性的由来，所以规定搜索方向是一个向量，最简单的搜索方向就是多变量函数的**梯度方向**。
+
+所以一般线性搜索指的是对$\varphi(\alpha)$的最优化问题，并且这个函数根据性质很容易知道是一个单调不增函数，并且满足
 
 $$
-\begin{align}
-\alpha_k &= \frac{\boldsymbol g_{k+1}-\boldsymbol g_{k}}{G \boldsymbol d_k}  \\
-&= \frac{\boldsymbol d_k^T(\boldsymbol g_{k+1}-\boldsymbol g_{k})}{ \boldsymbol d_k^T(G \boldsymbol d_k)}  \\
-&= \frac{\boldsymbol d_k^T\boldsymbol g_{k+1}-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} \\
-\end{align}
+\varphi(\alpha_k) < \varphi(0)
 $$
 
-那么一个正定二次函数一般方法计算出的步长为：
+这样的一个迭代过程就叫线性搜索，用于迭代得到多变量函数最优化的**最优解**。
+
+综上可知，**线性搜索通过变量的迭代关系，将对多变量函数的最优化问题，转换为了对步长因子的最优化问题。**
+
+> [!NOTE]
+>
+> 线性搜索中，步长因子的正数性质：
+>
+> 因为规定了搜索方向，并且变量迭代结果是在该方向上的结果，所以
+>
+> - 当$\alpha \leq 0$时，迭代结果要么在原来的位置，要么会不在搜索范围（该射线）上。
+>
+> 所以一定有$\alpha > 0$
+
+## 方向导数与梯度
+
+### 方向向量
+
+以二元函数为例，假设一个函数（如图）：
 
 $$
-\begin{align}
-\alpha_k &= \frac{\boldsymbol d_k^T\boldsymbol g_{k+1}-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}  \tag{1}
-\end{align}
+z = f(x,y)
 $$
 
-在这个方法下，如果想计算$\alpha_k$，就要先获取：
+[!img](/assets/illustrations/image-20251107213308079.png)
 
-- 迭代方向$d_k$（已知）。
-- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
-- 第$k+1$次迭代后的梯度$g_{k+1}$（比较难获取）。
+[!img](/assets/illustrations/image-20251107213755643.png)
 
-### 1.2 精确线性搜索
+据图所示，沿$u_1$方向的函数曲线就是曲线$C_1$，沿$u_2$方向的函数曲线就是曲线$C_2$。
 
-如果使用精确线性搜索，那么步长$\alpha_k$应该符合：
+[!img](/assets/illustrations/image-20251107215223143.png)
 
-$$
-\boldsymbol d_k^T\boldsymbol g_{k+1} =\boldsymbol g_{k+1}^T d_k= 0
-$$
+### 方向导数
 
-那么使用精确线性搜索计算出的步长为：
+**定义** . 设向量$\boldsymbol{u}$的单位方向向量$\boldsymbol{e_u} = \begin{pmatrix} \cos\alpha \\ \cos\beta \end{pmatrix}$，若如下极限存在，则该极限称为函数$z = f(x,y)$在$(x_0,y_0)$点**沿方向$\boldsymbol{u}$的方向导数**，记作：
 
 $$
 \begin{align}
-\alpha_k &= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}  \tag{2}
+\left. \frac{\partial f}{\partial \boldsymbol{u}} \right|_{\substack{x=x_0 \\ y=y_0}} &= \lim_{t \to 0^+} \frac{f(x_0 + t\cos\alpha, y_0 + t\cos\beta) - f(x_0, y_0)}{t} \\
+&= f_x(x_0,y_0) \cos \alpha + f_y(x_0,y_0) \cos \beta
 \end{align}
 $$
 
-在这个方法（将上面的方法也变成了**精确线性搜索**）下，如果想计算$\alpha_k$，就要先获取：
+![image](/assets/illustrations/image-20251107220108683.png)
 
-- 迭代方向$d_k$（假设已经获取）。
-- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
-
-所以，如果在**正定二次函数+精确线性搜索**的情况下，迭代条件是需要知道：
-
-- 第$k$次迭代后的输入$x_k$（已知）。
-- 迭代方向$d_k$（假设已经获取）。
-- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
-
-最后的迭代公式为：
+**证明** . 因为函数$f(x,y)$在$(x_0,y_0)$点可微分，所以有：
 
 $$
-x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k \quad  (正定二次函数+精确线性搜索) \tag{3}
+f(x_0 + \Delta x, y_0 + \Delta y) - f(x_0, y_0) = f_x(x_0, y_0)\Delta x + f_y(x_0, y_0)\Delta y + o\left(\sqrt{(\Delta x)^2 + (\Delta y)^2}\right)
 $$
+
+若$(x_0 + \Delta x, y_0 + \Delta y)$在以$(x_0, y_0)$点为起点、方向为$\boldsymbol{u}$的射线$l$上时，有：
+
+$$
+\Delta x = t\cos\alpha, \quad \Delta y = t\cos\beta, \quad \sqrt{(\Delta x)^2 + (\Delta y)^2} = t
+$$
+
+结合上方向导数的定义，所以方向向量$\boldsymbol u$的方向导数为：
+
+$$
+\begin{align*}
+\left. \frac{\partial f}{\partial \boldsymbol{u}} \right|_{\substack{x=x_0 \\ y=y_0}} &= \lim_{t \to 0^+} \frac{f(x_0 + t\cos\alpha, y_0 + t\cos\beta) - f(x_0, y_0)}{t} \\
+&= \lim_{t \to 0^+} \frac{f(x_0 + \Delta x, y_0 + \Delta y) - f(x_0, y_0)}{t} \\
+&= \lim_{t \to 0^+} \frac{f_x(x_0, y_0)\Delta x + f_y(x_0, y_0)\Delta y + o\left(\sqrt{(\Delta x)^2 + (\Delta y)^2}\right)}{t} \\
+&= \lim_{t \to 0^+} \frac{f_x(x_0, y_0) \cdot t\cos\alpha + f_y(x_0, y_0) \cdot t\cos\beta + o(t)}{t} \\
+&= f_x(x_0, y_0)\cos\alpha + f_y(x_0, y_0)\cos\beta \\
+&=
+\begin{pmatrix}
+f_x(x_0, y_0) \\
+f_y(x_0, y_0)
+\end{pmatrix} \cdot
+\begin{pmatrix}
+\cos\alpha \\
+\cos\beta
+\end{pmatrix} \\
+&= \boldsymbol v \cdot \boldsymbol e_u
+\end{align*}
+$$
+
+[!img](/assets/illustrations/image-20251107221328603.png)
+
+这样，我们就得到两个向量，一个是由多变量函数对每个变量的偏导组成的向量$\boldsymbol v$，还有一个是此时的变化方向的单位方向向量$\boldsymbol e_u$，设两个向量之间的夹角为$\theta$，那么在点$(x_0,y_0)$对于方向向量$\boldsymbol u$的一阶导数为
+
+$$
+\left. \frac{\partial f}{\partial \boldsymbol{u}} \right|_{\substack{x=x_0 \\ y=y_0}} = ||\boldsymbol v|| \cdot ||\boldsymbol e_u|| \cdot \cos \theta
+$$
+
+### 梯度
+
+当$\theta = 0$时，该导数取到最大值，此时方向向量与向量$\boldsymbol v$重叠，此时的方向向量称为**梯度**。
+
+所以，梯度是一个方向向量，是**模最大**的方向向量，所以沿方向向量的**变化率也是最大的**。
+
+将方向向量写为如下形式（哈密顿算子）：
+
+$$
+\boldsymbol g = \boldsymbol v = f_x(x_0, y_0)\boldsymbol i + f_y(x_0, y_0) \boldsymbol j \\
+即 \quad \nabla f = \boldsymbol g
+$$
+
+综上所述，方向向量、方向导数和梯度之间的关系为：
+
+- 方向导数是函数在某一点沿特定方向的变化率，其计算公式为：
+
+$$
+\left. \frac{\partial f}{\partial \boldsymbol{u}} \right|_{x=x_0, y=y_0} = f_x(x_0,y_0) \cos \alpha + f_y(x_0,y_0) \cos \beta
+$$
+
+其中，$\boldsymbol{e_u} = \begin{pmatrix} \cos\alpha \\ \cos\beta \end{pmatrix}$是单位方向向量。
+
+- 梯度是一个向量，定义为$\nabla f = f_x(x_0, y_0)\boldsymbol{i} + f_y(x_0, y_0) \boldsymbol{j}$，它表示函数在该点增长最快的方向。
+
+- 方向导数与梯度的关系可以表示为：
+
+$$
+\left. \frac{\partial f}{\partial \boldsymbol{u}} \right|_{x=x_0, y=y_0} = ||\nabla f|| \cdot \cos \theta
+$$
+
+其中$\theta$是梯度方向与方向向量$\boldsymbol{u}$之间的夹角。
+
+- 当$\theta = 0$时，即方向向量与梯度方向一致时，方向导数取得最大值$\|\nabla f\|$，表示函数在该点沿梯度方向增长最快；
+
+- 当$\theta = \pi$时，即方向向量与梯度方向相反时，方向导数取得最小值$-\|\nabla f\|$，表示函数在该点沿负梯度方向减少最快。
+
+结合上面提到的线性搜索步长因子的最优值条件，若迭代到的步长因子使多变量函数的值达到最优值，那么此时的搜索方向$\boldsymbol d_k$应该和下一个迭代点的梯度$\boldsymbol g_{k+1}$垂直，或者$\boldsymbol g_{k+1} =0$；不然目标函数值会脱离最优值。
+
+## 线性搜索的阶段
+
+一般，线性搜索分为两个阶段：
+
+- 阶段一（区间定位）：
+  确定一个包含理性步长因子（或问题最优解）的初始搜索区间$[a,b]$。
+- 阶段二（区间缩小）：
+  采用某种分割技术（如黄金分割法、二分法）或插值方法（如二次/三次插值）不断压缩区间，直至区间长度$b-a < \varepsilon$
+
+## 精确线性搜索
 
 > [!CAUTION]
 >
-> 后面我们默认使用精确线性搜索来简化步长因子的计算。
+> 因为转换为关于步长的函数，所以精确线性搜索算法是用于**处理一维函数**的，并且**计算量很大**。
 
-## 2 最速下降法
+### 定义
 
-### 2.1 一般函数
-
-#### 2.1.1 迭代方向$d_k$
-
-设目标函数$f(x)$在$x_k$附近连续可导，将$f(x)$在$x_k$处进行一阶$Taylor$展开：
+精确线性搜索，理想的做法是在每次迭代，都令目标函数沿搜索方向$d_k$达到最小值：
 
 $$
-f(x) = f(x_k) + g_k^T (x-x_k) + o(\| x-x_k \|)
+f(x_k+a_kd_k)=\min_{a > 0} f(x_k+\alpha d_k)
 $$
 
-那么：
+由凸函数的性质可知，此时函数的一阶导数为 0：，即$\alpha_k$符合条件：
 
 $$
-f(x_{k+1}) = f(x_k) + g_k^T (x_{k+1}-x_k) + o(\| x_{k+1}-x_k \|)
+\alpha_k=\{ \alpha > 0 \ | \  \nabla f(x_k + \alpha d_k)^T d_k = 0\}
 $$
 
-又因为$x_{k+1} = x_k + \alpha_k d_k$即$x_{k+1}-x_{k} = \alpha_k d_k$，所以：
+其中，我们可以将$\nabla f(x_k + \alpha d_k)$写为$g_{k+1}$，即
 
 $$
-f(x_{k+1}) = f(x_k) + g_k^T \alpha_k d_k + o(\| \alpha_k d_k \|)
+\nabla f(x_k + \alpha d_k)^T d_k = 0 \\
+\rightarrow g_{k+1}^T d_k = 0
 $$
 
-很显然，因为**确定的步长因子**$\alpha_k > 0$，所以只要$g_k^T d_k < 0$，那么$f(x_{k+1}) < f(x_k)$。
+其中，
 
-所以$g_k^T $和$d_k$异号。
+- $d_k$为方向导数
+- $g_{k+1}$为多变量函数在点$x_{k+1}$处的梯度
 
-现在我们就需要使下降的速度最快就行，即$\| g_k^T d_k \|$的值最大。由$Canchy-Schwartz$不等式可知
+> [!NOTE]
+>
+> 因为
+>
+> $$
+> x_{k+1} = x_k + \alpha d_k
+> $$
+>
+> 所以
+>
+> $$
+> \nabla f(x_k + \alpha d_k) = \nabla f(x_{k+1})=g_{k+1}
+> $$
+>
+> 是在点$x_{k+1}$处导数。
 
-$$
-\| g_k^T d_k \| \leq \| g_k \|\| d_k \|
-$$
+## 区间定位
 
-所以当且仅当$d_k=-g_k$，$\| g_k^T d_k \|$的值取到最大。
+上面我们提到线性搜索分为两个阶段，第一个阶段使确定搜索区间，所以先探讨确定搜索区间的方法
 
-所以迭代方向为**负梯度方向**。迭代公式为
+### 进退法（无导数方法）
 
-$$
-x_{k+1}=x_k - \alpha_k g_k
-$$
+#### 基本思想
 
-在这个方法下需要知道：
+在某一方向上，从一点出发，按一定的步长确定函数值呈现“高—低—高”的三个点，即$\varphi(a) \geq \varphi(c) \leq \varphi (b)$，这里$a \leq c \leq b$。
 
-- 第$k$次迭代后的输入$x_k$（已知）。
-- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla H(x_{k})$获得。
-- 步长因子$\alpha_k$（还需计算）。
-
-#### 2.1.2 步长因子$\alpha_k$（精确线性搜索）
-
-这里的精确线性搜索是通过带入$x_{k+1}$后，求导令其等于 0 实现求取$\alpha_k$的，所以属于精确线性搜索（但是需要已知$x_0$和$g_0$，来计算$\alpha_0$）。
-
-初始条件：$x_0$，$f(x)$，计算出$g_0=\nabla f(x_0)$
-
-步骤为：
-
-1. 计算$g_0=\nabla f(x_0)$，代入$x_{1}=x_0 - \alpha g_0$，带入$f(x_1)$得$\varphi(\alpha)$
-2. 计算导数，令$\varphi^{'}(\alpha_0)=0$，计算出$\alpha_0$
-3. 计算$x_{1}=x_0 - \alpha_0 g_0$
-4. 重复以上步骤。
-
-### 2.2 二次函数
-
-根据#1 正定二次函数（已知$d_k$）可以知道在**正定二次函数+精确线性搜索**的情况下，迭代公式为：
+那么选定一个初始点$x_0$，再确定一个初始步长$\alpha _0$ ，若
 
 $$
-x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
+f(x_0+\alpha _0)  \leq f(x_0)
 $$
 
-令$d_k=-g_k$，那么迭代公式为：
+则函数值减小。那么按核心思想，我们要寻找到一个最低点；所以，下一步从新的点$x_1$出发，继续增大步长$\alpha _0$，直到
 
 $$
-\begin{align}
-x_{k+1}&=x_k-\frac{ g_k^T g_{k}}{ g_k^TG g_k} g_k \\
-&=x_k-G^{-1} g_k
-\end{align}
+f(x_1+t\alpha _0)  \geq f(x_1)
 $$
 
-初始条件：$x_0$，$f(x)$
+其中，$t$为加倍系数。
 
-步骤为：
+这样就确定了正向方向的区间。
 
-1. 计算$g_0=\nabla f(x_0)$，计算$G^{-1}$
-2. 计算$x_{k+1}$
-3. 重复以上步骤
+用同样的方法可以确定反方向的区间。
 
-## 3 牛顿法
+#### 算法步骤
 
-### 3.1 一般函数（精确线性搜索）
+1. **选取初始数据**：$a_0 \in [0, \infty)$，$h_0 > 0$，加倍系数 $t > 1$（一般取 $t = 2$）。计算 $\varphi(\alpha_0)$，置 $k = 0$。
+2. **比较目标函数值**：令 $a_{k+1} = a_k + h_k$，计算 $\varphi_{k+1} = \varphi(\alpha_{k+1})$。若 $\varphi_{k+1} < \varphi_k$，转步骤 3；否则，转步骤 4。
+3. **加大搜索步长**：令 $h_{k+1} = t h_k$，$a = a_k$，$a_k = a_{k+1}$，$\varphi_k = \varphi_{k+1}$，$k = k + 1$，转步骤 2。
+4. **反向搜索**：若 $k = 0$，则转换搜索方向，令 $h_k = -h_k$，$a = a_{k+1}$，转步骤 2；否则，停止迭代，令 $a = \min\{a, a_{k+1}\}$，$b = \max\{a, a_{k+1}\}$，输出区间 $[a, b]$，算法终止。
 
-设目标函数$f(x)$在$x_k$附近连续可导，则令$\nabla f(x) = g_k$；将$f(x)$在$x_k$处进行二阶$Taylor$展开：
+> [!NOTE]
+>
+> 注意，在这里，随着迭代次数的增加，加倍系数$t$是呈指数增长。
 
-$$
-f(x) = f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TH_k(x-x_k)+ o(\| x-x_k \|)
-$$
+## 区间缩小
 
-设关于$x-x_k$的多项式
+### 0.618 法（黄金分割法）
 
-$$
-q(x-x_k)= f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TH_k(x-x_k)+ o(\| x-x_k \|)
-$$
+#### 原理
 
-当这个多项式取到极小值时，原目标函数取到极小值，所以对该多项式求导（精确线性搜索）：
+![5138074ba808941f856982d6429d6a7c.jpg](/assets/illustrations/5138074ba808941f856982d6429d6a7c.jpg)
 
-$$
-q^{'}(x-x_k)=g_k+H_k(x-x_k)=0
-$$
+假设一个**单峰函数**，在迭代$k$次之后，获得的缩小区间为$[a_k,b_k]$，选取两个**对称**的试探点$\lambda_k$和$\mu_k$，且$\lambda_k < \mu_k$
 
-所以迭代公式为
+**对称条件**的数学表达为：
 
 $$
-x_{k+1}=x_k -H^{-1}_k g_k
+\mu_k - a_k = b_k - \lambda_k
 $$
 
-其中，$H_k=\nabla f^2(x)$为$f(x)$的$Hesse$矩阵。
+$\varphi(\alpha)$的值有两种情形：
 
-**这个方法不依赖迭代方向和步长因子**。
+- 情形 1：$\varphi(\lambda_k) \leq \varphi(\mu_k)$，如图所示，极小值存在在区间$[a_k,\mu_k]$中，所以删去区间$[\mu_k,b_k]$
+- 情形 2：$\varphi(\lambda_k) > \varphi(\mu_k)$，同理，保留$[\lambda_k,b_k]$，删去$[a_k,\lambda_k]$
 
-### 3.2 二次函数
-
-对于一个正定二次函数：
-
-$$
-f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
-$$
-
-一阶导数（梯度）：
+以情形为例，那么迭代结果为
 
 $$
-g_k = Gx_k+b
+a_{k+1}=a_k \\
+b_{k+1}=\mu_k
 $$
 
-二阶导数（$Hesse$矩阵）：
+并且我们希望
 
 $$
-H_k = G^T = G
+b_{k+1} - a_{k+1} = \tau (b_k - a_k)
 $$
 
-所以迭代公式为：
-
-$$
-x_{k+1}=x_k -H^{-1}_k g_k =x_k -G^{-1} g_k
-$$
-
-在形式上和**正定二次函数+精确线性搜索+最速下降法**相同。
-
-步骤为：
-
-1. 计算$g_0=\nabla f(x_0)$，计算$G^{-1}$
-2. 计算$x_{k+1}$
-3. 重复以上步骤
-
-## 4 共轭梯度法
-
-共轭条件 1（迭代方向）：
-
-$$
-d_{k-1}^T G d_k=0
-$$
-
-共轭条件 2（梯度方向）：
+那么计算得到选取的试探点满足
 
 $$
 \begin{align}
-g_{k-1}^Td_{k-1}^T G d_k g_{k}^T=0 \\
-g_{k-1}^T A g_{k}^T=0
+\lambda_k =&a_k + (1-\tau)(b_k-a_k) \\
+\mu_k = &a_k+\tau(b_k-a_k)
 \end{align}
 $$
 
-### 4.1 一般函数
+> [!NOTE]
+>
+> 我们会发现$\lambda_k$和$\mu_k$关于$a_k+\frac{1}{2}(b_k-a_k)$对称。
 
-#### 4.1.1 迭代方向$d_k$
-
-记
+所以，现在拥有的区间为
 
 $$
-d_k = -g_k +\beta_{k-1} d_{k-1}
+[a_{k+1},b_{k+1}]=[a_k,\mu_k]
 $$
 
-需要知道
-
-- 第$k$次迭代后的梯度$g_k$（当前求得）
-- 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
-- $\beta_{k-1}$（需要求取）
-
-**求取$\beta_{k-1}$**：
+同样的，我们尝试选取试探点$\lambda_{k+1}$和$\mu_{k+1}$:
 
 $$
 \begin{align}
-d_{k-1}^T Gd_k &= d_{k-1}^T G (-g_k +\beta_{k-1} d_{k-1}) \\
-0&=-d_{k-1}^T G g_k+d_{k-1}^T G \beta_{k-1} d_{k-1} \\
-\beta_{k-1}&=\frac{d_{k-1}^T G g_k}{d_{k-1}^T G d_{k-1}}
+\lambda_{k+1} &= a_k+(1-\tau)(\mu_k-a_k)\\
+\mu_{k+1}& = a_{k}+\tau(\mu_k-a_{k})
 \end{align}
 $$
 
-所以迭代公式为：
+> [!NOTE]
+>
+> 我们会发现在$k+1$次的试探点选取时，试探点与$\lambda_k$无关。
 
-$$
-x_{k+1} = x_{k} + \alpha_{k} d_{k}
-$$
-
-需要知道：
-
-- 步长因子$\alpha_k$（**需要求取**）
-- 迭代方向$d_{k}$，如下：
-  - 第$k$次迭代后的梯度$g_k$（当前求得）
-  - 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
-  - $\beta_{k-1}$（**需要求取**）
-
-#### 4.1.2 步长因子$\alpha_k$（精确线性搜索）
-
-这里的精确线性搜索是通过带入$x_{k+1}$后，求导令其等于 0 实现求取$\alpha_k$的，所以属于精确线性搜索（但是需要已知$x_0$和$g_0$，来计算$\alpha_0$）。
-
-初始条件：$x_0$，$f(x)$
-
-1. 先求$d_0$：$d_0=-g_0$
-2. 带入$x_{1}$：$x_{1} = x_{0} + \alpha d_{0}$
-3. 计算$g_1$：$g_1 = \nabla f(x_1)$
-4. 计算$\beta_0$：$\beta_{0}=\frac{d_{0}^T G g_1}{d_{0}^T G d_{0}}$
-5. 计算$d_1$：$d_1 = -g_1 +\beta_{0} d_{0}$
-6. 重复以上步骤。
-
-### 4.2 二次函数
-
-对于一个正定二次函数：
-
-$$
-f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
-$$
-
-根据一阶导数，就有：
-
-$$
-g_k-g_{k-1}=G(x_k-x_{k-1})=G \alpha d_{k-1}
-$$
-
-所以：
+又因为$\mu_k = a_k+\tau(b_k-a_k)$，所以
 
 $$
 \begin{align}
-\beta_{k-1}&=\frac{g_k^T G d_{k-1}}{d_{k-1}^T G d_{k-1}} \\
-&=\frac{g_k^T (g_k-g_{k-1})}{d_{k-1}^T (g_k-g_{k-1})} \quad(CW公式)\\
+\lambda_{k+1} &= a_k+(1-\tau)(\mu_k-a_k)\\
+&=a_k+(1-\tau)(a_k+\tau(b_k-a_k)-a_k) \\
+&=a_k+\tau (1-\tau)(b_k-a_k) \\
+\mu_{k+1}& = a_{k}+\tau(\mu_k-a_{k})  \\
+&=a_{k}+\tau(a_k+\tau(b_k-a_k)-a_{k}) \\
+&=a_k+\tau^2(b_k-a_k)
 \end{align}
 $$
 
-计算分母：
+> [!NOTE]
+>
+> 此时的对称轴为$a_{k}+\frac{1}{2}\tau(b_k-a_k)$
+
+因为$\tau \in (0,1)$，所以如果想利用试探点$\lambda_k$，使得$k+1$次的试探点选取简化为选取一个试探点，则有
+
+$$
+\mu_{k+1} = \lambda_k
+$$
+
+那么令
+
+$$
+\tau^2 = (1-\tau)
+$$
+
+解得
+
+$$
+\tau= \frac{\sqrt{5}-1}{2} \approx 0.618
+$$
+
+这样，$k+1$次迭代的试探点的选取就可以写为
 
 $$
 \begin{align}
-d_{k-1}^T (g_k-g_{k-1})&=(-g_{k-1} +\beta_{k-2} d_{k-2})^T(g_k-g_{k-1}) \\
-&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
-&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
-&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T G \alpha d_{k-1} \\
-&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+ \alpha \beta_{k-2}^T (d^T_{k-2}Gd_{k-1}) \quad (方向共轭)  \\
-&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1} \quad (梯度共轭) \\
-&=g_{k-1}^T g_{k-1}
+\lambda_{k+1} &=a_{k+1} + (1-\tau)(b_{k+1}-a_{k+1}) \\
+\mu_{k+1}& = \lambda_k
 \end{align}
 $$
 
-计算分子：
+重复以上步骤，直至$b_k-a_k \leq \epsilon$。
+
+如果针对每次迭代，根据上面算出的$\tau$值，则有
 
 $$
 \begin{align}
-g_k^T (g_k-g_{k-1})&=g_k^T g_k-g_k^T g_{k-1}  \quad (梯度共轭) \\
-&=g_k^T g_k
+\lambda_k =&a_k + 0.382(b_k-a_k) \\
+\mu_k = &a_k+0.618(b_k-a_k)
 \end{align}
 $$
 
-所以：
+如果要最后的区间长度不超过$\delta$，即
 
 $$
-\beta_{k-1} = \frac{g_k^T g_k}{g_{k-1}^T g_{k-1}} \quad (FR公式)
+b_n-a_n \leq \delta
 $$
 
-与：
+由于每次迭代$b_{k+1} - a_{k+1} = \tau (b_k - a_k)$，所以
 
 $$
-\beta_{k-1} = \frac{g_k^T (g_k-g_{k-1})}{g_{k-1}^T g_{k-1}} \quad (PRP公式)
+\frac{b_n-a_n}{b_0-a_0} = \tau^n
 $$
 
-基于**正定二次函数+精确线性搜索**：
+则有$n$次迭代后满足
 
 $$
-x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
+\frac{\delta}{b_0-a_0} \geq \tau^n
 $$
 
-其中：
+则可计算出迭代次数。
 
-$$
-\alpha_k = -\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
-$$
+#### 算法步骤
 
-需要知道：
+1. **初始设置**：确定初始搜索区间$[a_0, b_0]$和精度要求$\delta > 0$；计算初始试探点：
 
-- $x_k$
-- $g_k$
-- $d_k$：
-  - 第$k$次迭代后的梯度$g_k$（当前求得）
-  - 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
-  - $\beta_{k-1}$：
-    - 第$k$次迭代后的梯度$g_k$（当前求得）
-    - 第$k-1$次迭代后的梯度$g_{k-1}$（已知）
-- $\alpha_k$
-  - $d_k$
-  - $g_k$
-
-**算法步骤（二次函数+精确线性搜索）**
-
-初始条件：$x_0 \in \mathbb{R}^n$，目标函数 $f(x)$，精度 $\varepsilon > 0$
-
-1. 计算初始梯度 $g_0 = \nabla f(x_0)$，若 $\|g_0\| \leq \varepsilon$，停止并输出 $x_0$；
-
-2. 初始化初始方向 $d_0 = -g_0$；
-
-3. 精确线性搜索求步长：
    $$
-   \alpha_k = \frac{-d_k^T g_k}{d_k^T G d_k}
+   \lambda_0 = a_0 + 0.382(b_0 - a_0),\quad \mu_0 = a_0 + 0.618(b_0 - a_0)
    $$
 
-4. 更新迭代点：$x_{1} = x_0 + \alpha_0 d_0$；
+   计算函数值$\varphi(\lambda_0)$和$\varphi(\mu_0)$，置迭代次数$k = 0$。
 
-5. 计算新梯度 $g_{1} = \nabla f(x_{1})$，若 $\|g_{k+1}\| \leq \varepsilon$，停止并输出 $x_{1}$；
+2. **比较函数值**：若$\varphi(\lambda_k) > \varphi(\mu_k)$，转步骤 3；否则转步骤 4。
 
-6. 用 FR 公式（或其他简化公式）计算 $\beta_k$：
+3. **缩小区间（右区间保留）**：若$b_k - \lambda_k \leq \delta$，停止迭代，输出$\mu_k$作为近似极小点；否则令：
+
    $$
-   \beta_k = \frac{g_{k+1}^T g_{k+1}}{g_k^T g_k}
+   a_{k+1} = \lambda_k,\quad b_{k+1} = b_k,\quad \lambda_{k+1} = \mu_k,\quad \mu_{k+1} = a_{k+1} + 0.618(b_{k+1} - a_{k+1})
    $$
 
-7. 构造新共轭方向：$d_{k+1} = -g_{k+1} + \beta_k d_k$；
+   计算$\varphi(\mu_{k+1})$，转步骤 5。
 
-## 5 拟牛顿法（补充完整）
+4. **缩小区间（左区间保留）**：若$\mu_k - a_k \leq \delta$，停止迭代，输出$\lambda_k$作为近似极小点；否则令：
 
-### 5.1 核心原理
-
-拟牛顿法通过构造 Hesse 矩阵的近似 $B_k$（或其逆 $H_k \approx B_k^{-1}$），满足拟牛顿方程 $y_k = B_{k+1} s_k$（或 $H_{k+1} y_k \approx s_k$），其中：
-
-$$
-s_k = x_{k+1} - x_k, \quad y_k = g_{k+1} - g_k
-$$
-
-迭代公式统一为：
-
-$$
-x_{k+1} = x_k - \alpha_k H_k g_k
-$$
-
-（$\alpha_k$ 由精确线性搜索确定）
-
-### 5.2 矩阵矫正方法
-
-#### 5.2.1 秩 1 矫正
-
-矫正公式：
-
-$$
-H_{k+1} = H_k + \frac{(s_k - H_k y_k)(s_k - H_k y_k)^T}{(s_k - H_k y_k)^T y_k}
-$$
-
-其中 $u_k = s_k - H_k y_k$，核心是通过秩 1 修正使 $H_{k+1}$ 满足拟牛顿方程，但无法保证正定性。
-
-#### 5.2.2 DFP 矫正（秩 2 矫正）
-
-矫正公式：
-
-$$
-H_{k+1} = H_k - \frac{H_k y_k y_k^T H_k}{y_k^T H_k y_k} + \frac{s_k s_k^T}{y_k^T s_k}
-$$
-
-性质：若 $H_k$ 正定且 $y_k^T s_k > 0$，则 $H_{k+1}$ 正定，保证搜索方向为下降方向。
-
-#### 5.2.3 BFGS 矫正（秩 2 矫正）
-
-对 Hesse 矩阵 $B_k$ 的矫正公式：
-
-$$
-B_{k+1} = B_k - \frac{B_k s_k s_k^T B_k}{s_k^T B_k s_k} + \frac{y_k y_k^T}{s_k^T y_k}
-$$
-
-若需转换为 $H_{k+1} \approx B_{k+1}^{-1}$，可通过矩阵求逆公式推导，与 DFP 矫正呈对偶关系。
-
-### 5.3 算法步骤（DFP 矫正+精确线性搜索）
-
-初始条件：$x_0 \in \mathbb{R}^n$，目标函数 $f(x)$，精度 $\varepsilon > 0$，初始近似矩阵 $H_0 = I$（单位矩阵）
-
-1. 计算梯度 $g_0 = \nabla f(x_0)$，若 $\|g_0\| \leq \varepsilon$，停止并输出 $x_0$；
-2. 确定搜索方向：$d_0 = -H_0 g_0$；
-3. 精确线性搜索求步长 $\alpha_0$：$\alpha_0 = \arg\min_{\alpha > 0} f(x_0 + \alpha d_0)$；
-4. 更新迭代点：$x_1 = x_0 + \alpha_0 d_0$；
-5. 计算 $s_0 = x_1 - x_0$，$g_1 = \nabla f(x_1)$，$y_0 = g_1 - g_0$；
-6. 若 $\|g_1\| \leq \varepsilon$，停止并输出 $x_1$；
-7. DFP 矫正更新 $H_1$：
    $$
-   H_1 = H_0 - \frac{H_0 y_0 y_0^T H_0}{y_0^T H_0 y_0} + \frac{s_0 s_0^T}{y_0^T s_0}
+   a_{k+1} = a_k,\quad b_{k+1} = \mu_k,\quad \mu_{k+1} = \lambda_k,\quad \lambda_{k+1} = a_{k+1} + 0.382(b_{k+1} - a_{k+1})
    $$
-8. 令 $k = k+1$，返回步骤 2，重复计算 $d_k = -H_k g_k$ 及后续步骤。
 
-### 5.4 二次函数特例
+   计算$\varphi(\lambda_{k+1})$，转步骤 5。
 
-对于正定二次函数 $f(x) = \frac{1}{2}x^T G x + b^T x + c$，拟牛顿方程精确成立（$y_k = G s_k$，即$B_k=G$），且：
+5. **迭代更新**：置$k = k + 1$，返回步骤 2。
 
-1. DFP 矫正具有二次终止性，至多经过 $n$ 次迭代收敛到最优解。
+> [!CAUTION]
+>
+> 注意，该算法只适用于单峰函数，若是一个函数有多个极小值，需要进行分割到每段内进行计算。
+
+### 二分法
+
+如果$f(x)$的导数存在且容易计算，那么我们使用二分法可以让迭代速度提高，因为二分法可以每次将区间缩小至原来的二分之一。
+
+#### 原理
+
+设$f(x)$为下单峰函数，若$f(x)$在$[a,b]$具有连续的一阶导数，且$f^{'}(a)<0，f^{'}(b)>0$。
+
+取中点
+
+$$
+c=\frac{a+b}{2}
+$$
+
+三种情形：
+
+- 如果$f^{'}(c)>0$，那么极小值点存在于区间$[a,c]$中，删去区间$[c,b]$
+- 如果$f^{'}(c)<0$，那么极小值点存在于区间$[c,b]$中，删去区间$[a,c]$
+- 如果$f^{'}(c)=0$，那么点$c$即为函数的极小值点，算法终止
+
+假设$k$次迭代后的区间为$[a_k,b_k]$，那么试探点为
+
+$$
+c_k=\frac{a_k+b_k}{2}
+$$
+
+因为每次迭代都会将区间长度缩小一半，所以和 0.618 法同理：
+
+$$
+\frac{\delta}{b_0-a_0} \geq (\frac{1}{2})^n
+$$
+
+即可算出迭代次数。
+
+### 三点二次插值法
+
+当函数具有比较好的解析性时，这个方法比上面两个方法效果更好。
+
+在函数上选取三个点，使其满足$\varphi (x_1)>\varphi (x_2)<\varphi(x_3),x_1<x_2<x_3$，则设二次函数
+
+$$
+q(x)=ax^2+bx+c
+$$
+
+求得极小值点为
+
+$$
+\overline{x} = \frac{1}{2} \frac{(x_2^2-x_3^2)\varphi_1+(x_3^2-x_1^2)\varphi_2+(x_1-x_2)\varphi_3}{(x_2-x_3)\varphi_1+(x_3-x_1)\varphi_2+(x_1-x_2)\varphi_3}
+$$
+
+得到如下情形，对于给定精度$\epsilon$
+
+- 如果$\|x^*-\overline{x}\|< \varepsilon$，那么$\overline{x}$就是近似极小值点。
+- 计算$\varphi(\overline{x})$，保留四个函数值最小的三个点，再进行三点二次插值。
+
+## 不精确线性搜索
+
+比起精确线性搜索，不依赖于精确的一维搜索过程（每次都要找到最优的步长），所以收敛速度更快，并且可以放松对$\alpha_k$的精度。
+
+### Goldstein 原则
+
+本质是给函数划定两条线，限制步长的搜索范围。
+
+上面我们知道当$k+1$次迭代后，我们将线性搜索的表达式转化为关于步长$\alpha$的表达式如下：
+
+$$
+f(x_{k+1})=\varphi(\alpha_k)=f(x_k+\alpha_k d_k)
+$$
+
+其一阶导数为
+
+$$
+\varphi ^{'}(\alpha_k) = \nabla f(x_k+\alpha_k d_k)^T d_k=\nabla f(x_{k+1})^T d_k=g^T_{k+1} d_k
+$$
+
+接下来我们希望找到一个适合的$\alpha_k$​，让
+
+$$
+f(x_k)>f(x_{k+1})=\varphi(\alpha_k)= \min(\varphi(\alpha_k)|\alpha_k \in [0,+\infty))
+$$
+
+![image-20251110181634040.png](/assets/illustrations/image-20251110181634040.png)
+
+该准则规定，需要绘制两条经过$(0,f(x_k))$的直线。
+
+根据表达式我们知道，当$\alpha_k=0$时，
+
+$$
+f(x_{k+1})=\varphi(0)=f(x_k)
+$$
+
+此时的斜率为
+
+$$
+\varphi ^{'}(0) = \nabla f(x_k)^T d_k=g^T_{k} d_k
+$$
+
+那么直线的表达式就为
+
+$$
+L(\alpha) = \varphi^{'}(0)\alpha + \varphi(0)=g^T_{k} d_k \alpha+f(x_k)
+$$
+
+其中，$g^T_{k} d_k$为初始斜率。
+
+若是给斜率增加一个缩小系数$\rho \in (0,\frac{1}{2})$：
+
+$$
+\begin{align}
+L_1(\alpha)&=\rho \varphi^{'}(0)\alpha + \varphi(0) \\
+L_2(\alpha)&=(1-\rho) \varphi^{'}(0)\alpha + \varphi(0)
+\end{align}
+$$
+
+那么需要满足两个条件：
+
+$$
+\begin{align}
+f(x_k+\alpha_{k} d_k) &\leq \rho \varphi^{'}(0)\alpha_{k} + \varphi(0) \\
+f(x_k+\alpha_{k} d_k) &\geq (1-\rho) \varphi^{'}(0)\alpha_{k} + \varphi(0)
+\end{align}
+$$
+
+其中因为
+
+$$
+\varphi(0)=f(x_k)
+$$
+
+所以直线函数的斜率为$\alpha_k=0$时的斜率
+
+$$
+\varphi ^{'}(0) = g^T_k d_k
+$$
+
+所以直线函数如图所示。
+
+> [!NOTE]
+>
+> 因为是过点$(0,f(x_k))$的直线并且其斜率通过$f(x_k)$的视角，当时并没有产生步长增量，所以计算斜率时$\alpha=0$。
+
+根据图我们也可以看出其原理，当步长因子$\alpha$不为 0 时，随着$\alpha$的增大，$L(\alpha)$的值应该沿着直线前进，此时对应的目标函数值会沿着曲线$f(x_k+\alpha d_k)$前进。
+
+### Wolfe 原则
+
+根据 Goldstein 原则的图我们可以知道，会出现一种情况，两条直线会把原来目标函数值的值的极小值排除在外。
+
+![image-20251110164215516.png](/assets/illustrations/image-20251110164215516.png)
+
+设$k$次迭代后，进入对步长$\alpha_k$的优化，此时的**初始直线的斜率**为：
+
+$$
+g^T_k d_k \quad(此时步长因子为\alpha_k)
+$$
+
+对函数$f(x_k+\alpha_{k+1} d_k)$求导，得到
+
+$$
+\nabla f(x_k+\alpha_{k+1} d_k)^T d_k=g^T_{k+1} d_k
+$$
+
+即为$\varphi(\alpha)$的斜率。
+
+现在我们通过对初始斜率的缩放得到一个新的斜率
+
+$$
+\sigma g^T_k d_k
+$$
+
+这个斜率要满足把所有$\varphi(\alpha)$在极小值点左边的斜率包括在范围内，所有
+
+$$
+\sigma g^T_k d_k \leq g^T_{k+1} d_k
+$$
+
+所以一定满足
+
+$$
+\sigma g^T_k d_k < \rho g^T_{k} d_k
+$$
+
+因为斜率为负所以
+
+$$
+\sigma >\rho
+$$
+
+则
+
+$$
+\sigma \in (\rho,1)
+$$
+
+这样就生成了 Wolfe 准则：
+
+$$
+f(x_k + \alpha_k d_k) \leq f(x_k) + \rho \alpha_k g_k^T d_k \quad (\text{充分下降条件})
+$$
+
+$$
+g_{k+1}^T d_k \geq \sigma g_k^T d_k \quad (\text{曲率条件})
+$$
+
+当$\sigma \rightarrow 0$时，$\rho \rightarrow 0$，为精确线性搜索。

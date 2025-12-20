@@ -1,26 +1,84 @@
 ---
-title: 无约束优化方法
-date: 2025-11-12 10:00:00 +0800
+title: 第四章 无约束优化
+date: 2025-11-10 10:00:00 +0800
 categories: [数学原理, 最优化方法]
-tags: [无约束优化, 正定二次函数, 极小化]
+tags: [正定二次函数, 无约束优化]
 math: true
+description: 无约束优化是研究在多个决策变量下，寻找目标函数的极值（极大 / 极小），约束条件也可线性或非线性。
 ---
 
-## 1 正定二次函数的极小化
+## 1 正定二次函数（已知$d_k$）
 
-对于一个正定二次函数
-
-$$
-H(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b \boldsymbol x+c
-$$
-
-其$k$次迭代后的梯度为
+对于一个正定二次函数：
 
 $$
-\boldsymbol g_k=\nabla H(\boldsymbol x_k) = G\boldsymbol x_k+b
+f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
 $$
 
-所以
+第$k$次迭代后，其迭代公式为：
+
+$$
+x_{k+1} = x_{k} + a_k d_k
+$$
+
+要继续迭代，即计算$x_{k+1}$，我们就需要确定：
+
+- 迭代方向$d_k$（本章的主要任务，此处假设已知）。
+- 步长因子$\alpha_k$（需要计算）。
+
+### 1.1 通常计算方法
+
+当选定好迭代方向$d_k$后，需要计算$\alpha_k$：
+
+$$
+\alpha_{k} = \arg_{\alpha} \min \varphi(\alpha)
+$$
+
+根据步长因子视角的正定二次函数表达式：
+
+$$
+\begin{align}
+\varphi(\alpha) = f(x_{k} + \alpha d_k) = \frac{1}{2}(x_{k} + \alpha d_k)^TG (x_{k} + \alpha d_k)+b^T (x_{k} + \alpha d_k)+c \\
+\end{align}
+$$
+
+正常情况下计算$\min \varphi(\alpha)$，需要计算其导数$\varphi^{'}(\alpha)$。
+
+这个方法需要知道：
+
+- 第$k$次迭代后的输入$x_k$（已知）。
+- 迭代方向$d_k$（已知）。
+
+麻烦的点在于代入$H(x_{k+1})$，然后计算其导数：
+
+$$
+\begin{align}
+\varphi'(\alpha) &= (x_k + \alpha d_k)^T G d_k + b^T d_k \\
+\end{align}
+$$
+
+令$\varphi^{'}(\alpha) = 0$，则：
+
+$$
+\begin{align}
+(x_k + \alpha d_k)^T G d_k + b^T d_k &= 0 \\
+
+\end{align}
+$$
+
+很明显这样的方法，其本质也是**精确线性搜索**方法，并且计算过程过于繁琐。
+
+**另一种方法**
+
+当我们通过梯度方法来计算，那么对于一个正定二次函数，第$k$次迭代后，其梯度为：
+
+$$
+\begin{align}
+\boldsymbol g_k =\nabla f(\boldsymbol x_k) &= G\boldsymbol x_k+b \\
+\end{align}
+$$
+
+所以：
 
 $$
 \begin{align}
@@ -30,72 +88,94 @@ $$
 \end{align}
 $$
 
-其一维线性搜索结果为
+那么其步长应该符合：
 
 $$
 \begin{align}
-\alpha_k &= \frac{\boldsymbol g_{k+1}-\boldsymbol g_{k}}{G \boldsymbol d_k} \\
+\alpha_k &= \frac{\boldsymbol g_{k+1}-\boldsymbol g_{k}}{G \boldsymbol d_k}  \\
 &= \frac{\boldsymbol d_k^T(\boldsymbol g_{k+1}-\boldsymbol g_{k})}{ \boldsymbol d_k^T(G \boldsymbol d_k)}  \\
 &= \frac{\boldsymbol d_k^T\boldsymbol g_{k+1}-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} \\
-&= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
 \end{align}
 $$
 
-所以迭代公式为
+那么一个正定二次函数一般方法计算出的步长为：
 
 $$
-x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
+\begin{align}
+\alpha_k &= \frac{\boldsymbol d_k^T\boldsymbol g_{k+1}-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}  \tag{1}
+\end{align}
 $$
 
-> [!NOTE]
+在这个方法下，如果想计算$\alpha_k$，就要先获取：
+
+- 迭代方向$d_k$（已知）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
+- 第$k+1$次迭代后的梯度$g_{k+1}$（比较难获取）。
+
+### 1.2 精确线性搜索
+
+如果使用精确线性搜索，那么步长$\alpha_k$应该符合：
+
+$$
+\boldsymbol d_k^T\boldsymbol g_{k+1} =\boldsymbol g_{k+1}^T d_k= 0
+$$
+
+那么使用精确线性搜索计算出的步长为：
+
+$$
+\begin{align}
+\alpha_k &= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}  \tag{2}
+\end{align}
+$$
+
+在这个方法（将上面的方法也变成了**精确线性搜索**）下，如果想计算$\alpha_k$，就要先获取：
+
+- 迭代方向$d_k$（假设已经获取）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
+
+所以，如果在**正定二次函数+精确线性搜索**的情况下，迭代条件是需要知道：
+
+- 第$k$次迭代后的输入$x_k$（已知）。
+- 迭代方向$d_k$（假设已经获取）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla f(x_{k})$获得（等于已知）。
+
+最后的迭代公式为：
+
+$$
+x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k \quad  (正定二次函数+精确线性搜索) \tag{3}
+$$
+
+> [!CAUTION]
 >
-> 我们会发现在二次正定函数中，迭代$k$次后的步长因子$\alpha_k$是可以由当时的梯度和搜索方向决定的。
-
-### 1.1 二次终止性
-
-对于二次函数，不管运用什么优化方法，它的终止条件和最优步长因子的终止条件矛盾时，即具有二次终止性。
-
-例如当符合终止条件
-
-$$
-d_k^Tg_k+\alpha_k d_k^TGd_k=0
-$$
-
-此时需要
-
-$$
-d_k=0
-$$
-
-但是此时步长因子$\alpha_k$不存在，即分母为 0，无法继续搜索。
+> 后面我们默认使用精确线性搜索来简化步长因子的计算。
 
 ## 2 最速下降法
 
-### 2.1 原理
+### 2.1 一般函数
 
-最速下降法是以负梯度方向为最速下降方向的极小值优化方法。
+#### 2.1.1 迭代方向$d_k$
 
-设目标函数$f(x)$在$x_k$附近连续可导，则令$\nabla f(x) = g_k$；将$f(x)$在$x_k$处进行$Taylor$展开：
+设目标函数$f(x)$在$x_k$附近连续可导，将$f(x)$在$x_k$处进行一阶$Taylor$展开：
 
 $$
 f(x) = f(x_k) + g_k^T (x-x_k) + o(\| x-x_k \|)
 $$
 
-因为下一个点$x = x_{k+1}=x_k+\alpha_k d_k$，所以记$\alpha_k d_k = x-x_k$，那么
+那么：
 
 $$
-f(x_k+\alpha_k d_k) = f(x_k) + g_k^T \alpha_k d_k + o(\| \alpha_k d_k \|) \\
-\Downarrow \\
+f(x_{k+1}) = f(x_k) + g_k^T (x_{k+1}-x_k) + o(\| x_{k+1}-x_k \|)
+$$
+
+又因为$x_{k+1} = x_k + \alpha_k d_k$即$x_{k+1}-x_{k} = \alpha_k d_k$，所以：
+
+$$
 f(x_{k+1}) = f(x_k) + g_k^T \alpha_k d_k + o(\| \alpha_k d_k \|)
 $$
 
 很显然，因为**确定的步长因子**$\alpha_k > 0$，所以只要$g_k^T d_k < 0$，那么$f(x_{k+1}) < f(x_k)$。
 
 所以$g_k^T $和$d_k$异号。
-
-> [!NOTE]
->
-> 其中，步长因子由线性搜索确定，在前面我们知道，线性搜索将目标函数转换为一个**一维搜索**，这样就可以通过对一维搜索的最优化确定步长因子。
 
 现在我们就需要使下降的速度最快就行，即$\| g_k^T d_k \|$的值最大。由$Canchy-Schwartz$不等式可知
 
@@ -111,331 +191,136 @@ $$
 x_{k+1}=x_k - \alpha_k g_k
 $$
 
-> [!IMPORTANT]
->
-> 根据以上的内容进行分析，最速下降法是建立在一个固定步长因子情况下的优化，但是经过推导，这个方向是可以确定下来的，即负梯度方向，所以在每次迭代可以先被确定下来。
->
-> 在前一章提到的线性搜索是建立在拥有一个确定的线性的方向，对步长因子进行优化的。
->
-> 所以在进行目标函数优化时，每次迭代应该先确定搜索方向（负梯度方向），再搜索步长因子。
+在这个方法下需要知道：
 
-### 2.2 算法
+- 第$k$次迭代后的输入$x_k$（已知）。
+- 第$k$次迭代后的梯度$g_{k}$，通过计算$\nabla H(x_{k})$获得。
+- 步长因子$\alpha_k$（还需计算）。
 
-1. 给出$x_0 \in R^n$，$0 \leq \varepsilon \ll 1$，$k := 0$
-2. 计算$d_k = -g_k$；如果$\|g_k\| \leq \varepsilon$，停止。
-3. 由线性搜索求步长因子$\alpha_k$。
-4. 计算$x_{k+1} = x_k + \alpha_k d_k$
-5. $k := k+1$，转步 2。
+#### 2.1.2 步长因子$\alpha_k$（精确线性搜索）
 
-### 2.3 二次终止性
+这里的精确线性搜索是通过带入$x_{k+1}$后，求导令其等于 0 实现求取$\alpha_k$的，所以属于精确线性搜索（但是需要已知$x_0$和$g_0$，来计算$\alpha_0$）。
 
-对于一个正定二次函数
+初始条件：$x_0$，$f(x)$，计算出$g_0=\nabla f(x_0)$
 
-$$
-H(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b \boldsymbol x+c
-$$
+步骤为：
 
-其$k$次迭代后的梯度为
+1. 计算$g_0=\nabla f(x_0)$，代入$x_{1}=x_0 - \alpha g_0$，带入$f(x_1)$得$\varphi(\alpha)$
+2. 计算导数，令$\varphi^{'}(\alpha_0)=0$，计算出$\alpha_0$
+3. 计算$x_{1}=x_0 - \alpha_0 g_0$
+4. 重复以上步骤。
+
+### 2.2 二次函数
+
+根据#1 正定二次函数（已知$d_k$）可以知道在**正定二次函数+精确线性搜索**的情况下，迭代公式为：
 
 $$
-\boldsymbol g_k=\nabla H(\boldsymbol x_k) = G\boldsymbol x_k+b
+x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
 $$
 
-其步长因子根据1 正定二次函数的极小化可以知道为：
+令$d_k=-g_k$，那么迭代公式为：
 
 $$
-\alpha_k= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
+\begin{align}
+x_{k+1}&=x_k-\frac{ g_k^T g_{k}}{ g_k^TG g_k} g_k \\
+&=x_k-G^{-1} g_k
+\end{align}
 $$
 
-事实上，
+初始条件：$x_0$，$f(x)$
 
-$$
-\min_\alpha \varphi(\alpha)=f(x_k+\alpha d_k)=\frac{1}{2}(x_k+\alpha d_k)^TG(x_k+\alpha d_k)+b^T(x_k+\alpha d_k)+c
-$$
+步骤为：
 
-得精确线性搜索最优解的终止条件：
-
-$$
-d_k^T(Gx_{k+1}+b)=0 \\
-d_k^T(G(x_k+\alpha_kd_k)+b)=0 \\
-d_k^T(Gx_k+b)+\alpha_k d_k^TGd_k=0 \\
-d_k^Tg_k+\alpha_k d_k^TGd_k=0
-$$
-
-又因为$d_k=-g_k$，所以
-
-$$
-\alpha_k= \frac{\boldsymbol g_k^T \boldsymbol g_{k}}{ \boldsymbol g_k^TG \boldsymbol g_k}=G^{-1}
-$$
-
-迭代公式为
-
-$$
-x_{k+1}=x_k -G^{-1} g_k
-$$
-
-> [!NOTE]
->
-> 这个公式和后面的牛顿法是一样的，只是牛顿法不依赖步长因子，而且每次迭代都要计算当前的 Hesse 矩阵$G$，但是在现在-正定二次函数使用最速下降法+精确线性搜索的情况下，只迭代了一次。
-
-所以得出结论，对于正定二次函数，当使用最速下降法+精确线性搜索时，只需要迭代一次就可以获得最优解。
-
-并且最速下降法具有二次终止性，即对于二次函数，至多经过$n$步线性搜索终止。
-
-### 2.4 锯齿现象
-
-我们发现最速下降法，在一开始下降速度较快，而靠近最优值时搜索轨迹是一个锯齿状，这是因为相邻的两个搜索方向是正交的。
-
-因为在最速下降法中，$d_k=g_k$，所以
-
-$$
-d_k^T d_{k+1}=d_k^T g_{k+1}
-$$
-
-又因为每一步的最优目标函数值取到最优值的条件（此时已经靠近最优值了），即$g_{k+1}^T d_k=0$，所以
-
-$$
-d_k^T d_{k+1}=0
-$$
-
-即相邻的两个搜索方向正交。
-
-> [!NOTE]
->
-> 这个现象就导致$\Delta x_k=x_{k+1}-x_k=\alpha_kg_k \rightarrow 0$，因为每次都是下降最快的方向，导致越是接近最优值，步长因子就会越小，从而拖慢整体的收敛速度，导致整体收敛速度偏慢，这也是该算法的缺点。
-
-### 2.5 收敛速度
-
-最速下降法具有**整体收敛性**（从任意初始点出发都能收敛到极小点），但收敛速度为**线性收敛**，且收敛速度强烈依赖于目标函数 Hesse 矩阵的**条件数**。
-
-设正定矩阵 $ G $ 的最大特征值为 $ \lambda_1 $，最小特征值为 $ \lambda_n $，定义矩阵条件数 $ \kappa = \frac{\lambda_1}{\lambda_n} $（$ \kappa \geq 1 $，$ \kappa $ 越大矩阵越“病态”）。
-
-$$
-\frac{f\left(x_{k+1}\right)-f\left(x_{0}\right)}{f\left(x_{k}\right)-f\left(x_{0}\right)} \leq\left(\frac{\lambda_{1}-\lambda_{n}}{\lambda_{1}+\lambda_{n}}\right)^{2}=\left(\frac{\kappa-1}{\kappa+1}\right)^2
-$$
-
-该式表明，函数值与初始函数值的差值的衰减率受矩阵特征值差距影响。当 $ \kappa $ 很大时，衰减率趋近于 1，函数值下降极慢，出现“锯齿现象”。
-
-$$
-\frac{\left\| x_{k+1}-x^{*}\right\| }{\left\| x_{k}-x^{*}\right\| } \leq \sqrt{\kappa}\left(\frac{\kappa-1}{\kappa+1}\right)
-$$
-
-其中 $ x^\* $ 是极小点。该式说明迭代点与极小点距离的衰减率由条件数 $ \kappa $ 主导，$ \kappa $ 越大，收敛越慢；当 $ \kappa = 1 $（如 $ G $ 为单位矩阵）时，一步收敛。
-
-最速下降法的收敛速度为线性收敛，且**严重依赖于 Hesse 矩阵的条件数**。当矩阵病态（$ \kappa \gg 1 $）时，收敛极慢；仅当矩阵“良态”（$ \kappa \approx 1 $）时，收敛速度较快。这一缺陷也促使了共轭梯度法、拟牛顿法等更高效算法的发展。
+1. 计算$g_0=\nabla f(x_0)$，计算$G^{-1}$
+2. 计算$x_{k+1}$
+3. 重复以上步骤
 
 ## 3 牛顿法
 
-最速下降法因迭代路线呈锯齿形,收敛速度很慢,仅是线性收敛。
+### 3.1 一般函数（精确线性搜索）
 
-最速下降法本质是用线性函数近似目标函数，所以要想得到快速算法,需要考虑对目标函数的高阶逼近。
-
-### 3.1 原理
-
-同样的，设目标函数$f(x)$在$x_k$附近连续可导，则令$\nabla f(x) = g_k$；将$f(x)$在$x_k$处进行$Taylor$展开：
+设目标函数$f(x)$在$x_k$附近连续可导，则令$\nabla f(x) = g_k$；将$f(x)$在$x_k$处进行二阶$Taylor$展开：
 
 $$
-f(x) = f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TG_k(x-x_k)+ o(\| x-x_k \|)
+f(x) = f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TH_k(x-x_k)+ o(\| x-x_k \|)
 $$
 
 设关于$x-x_k$的多项式
 
 $$
-q(x-x_k)= f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TG_k(x-x_k)+ o(\| x-x_k \|)
+q(x-x_k)= f(x_k) + g_k^T (x-x_k) +\frac{1}{2}(x-x_k)^TH_k(x-x_k)+ o(\| x-x_k \|)
 $$
 
-当这个多项式取到极小值时，原目标函数取到极小值，所以对该多项式求导：
+当这个多项式取到极小值时，原目标函数取到极小值，所以对该多项式求导（精确线性搜索）：
 
 $$
-q^{'}(x-x_k)=g_k+G_k(x-x_k)=0
+q^{'}(x-x_k)=g_k+H_k(x-x_k)=0
 $$
 
 所以迭代公式为
 
 $$
-x_{k+1}=x_k -G^{-1}_k g_k
+x_{k+1}=x_k -H^{-1}_k g_k
 $$
 
-> [!CAUTION]
->
-> 我们会发现牛顿法并不依赖于步长因子，这与最速下降法不一样。所以没有二次终止性。
+其中，$H_k=\nabla f^2(x)$为$f(x)$的$Hesse$矩阵。
 
-### 3.2 算法
+**这个方法不依赖迭代方向和步长因子**。
 
-1. 给定初始点$x_0$，精度$\varepsilon >1$，$k=0$
-2. 计算$g_k$
-3. 若 $\|\nabla f(x_k)\| \leq \varepsilon $，停止，$x = x*k $；否则，当$G_k$可逆时，计算$x*{k+1}$，转步骤 2。
+### 3.2 二次函数
 
-### 3.3 收敛定理
-
-设$ f(x) $二阶连续可微，$ x^\* $ 是 $ f(x) $ 的局部极小点，$ f(x) $在$ x^\* $处的Hesse矩阵$ G(x^\*) = \nabla^2 f(x^\*) $正定。
-
-假定$ f(x) $的Hesse矩阵$ G_k = \nabla^2 f(x_k) $满足**Lipschitz条件**，即存在$ \beta > 0 $，使得对于所有$ 1 \leq i, j \leq n $，有
+对于一个正定二次函数：
 
 $$
-G_{ij}(x) - G_{ij}(y) \leq \beta \| x - y \|, \quad \forall x, y \in R^n
+f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
 $$
 
-其中$ G\_{ij}(x) $是Hesse矩阵$ G(x) $的第$ (i,j) $元素，$G_k=G(x_k)$。
-
-也就是说当$x=x^\*，y=x_0$时，$\| x^{\*} - x_0 \| < \varepsilon$，即初始点和最优点充分靠近时，他们的 Hesse 矩阵矩阵近似相等，那么因为**$ f(x) $在$ x^{\*}$处的Hesse矩阵$ G(x^{\*}) = \nabla^2 f(x^\*) $正定**，所以任意点$x_k$的$G_k$都正定，即$G_k$可逆，那么对于所有的$k$，都能算出$x_{k+1}=x_k -G^{-1}_k g_k$。
-
-> [!NOTE]
->
-> 从如上的条件，我们可以看出，如果想使用牛顿法，必须保证$G_k$可逆，这就要满足牛顿法的收敛定理，即初始点和最优点充分接近，才能保证收敛，不然会在某个$k$停止。
->
-> 这是牛顿法的缺点。
-
-### 3.4 优缺点
-
-#### 3.4.1 优点
-
-1. 若 Hesse 矩阵$ G_k = \nabla^2 f(x_k) $正定且初始点$ x_0 $充分靠近极小点$ x^\* $，算法具有**二阶收敛速度**，收敛效率远高于最速下降法的线性收敛。
-2. 对于**正定二次函数**（如$ f(x)=\frac{1}{2}x^T G x + b^T x + c $，$ G $正定），Newton 法仅需**一次迭代**即可精确找到极小点，无需多轮迭代。
-
-#### 3.4.2 缺点
-
-1. 算法仅具备**局部收敛性**：仅当初始点$ x*0 $充分靠近极小点$ x^* $时才能保证收敛；若初始点远离$ x^\_ $，可能导致迭代点列$ \{x_k\} $发散，或目标函数值$ \{f(x_k)\} $不单调下降。
-2. 每次迭代需计算**Hesse 矩阵**$ G_k = \nabla^2 f(x_k) $：对于复杂目标函数（如高维、非线性强的函数），Hesse 矩阵的计算过程复杂、工作量大，甚至可能无法显式求解。
-3. 每次迭代需求解线性方程组$ G_k d_k = -g_k $（$ g_k = \nabla f(x_k) $为梯度）：若Hesse矩阵$ G_k $奇异或病态，方程组可能无解、解不稳定，且得到的搜索方向$ d_k $可能不是下降方向（违背下降算法核心要求）。
-4. 收敛目标不确定性：迭代过程中，收敛于鞍点或极大点的可能性与收敛于极小点的可能性一致，无法保证最终收敛到极小点。
-
-### 3.5 共轭方向法
-
-所谓共轭向量法就是所有搜索方向都是相互共轭的方法。
-
-### 3.6 共轭
-
-定义：设$G$是$n \times n$的对称正交矩阵，$d_1$和$d_2$是非零的$n$维向量，如果
+一阶导数（梯度）：
 
 $$
-d_1^TGd_2=0
+g_k = Gx_k+b
 $$
 
-那么就称$d_1$和$d_2$是**$G$-共轭**的，简称共轭。
-
-> [!NOTE]
->
-> 如果$d_1$和$d_2$是共轭的，那么$d_1$和$d_2$就是线性无关的。
-
-关于线性无关的证明：
-
-首先线性无关的定义是（此处依赖该共轭的定义来写）：
+二阶导数（$Hesse$矩阵）：
 
 $$
-c_1d_1+c_2d_2=0
+H_k = G^T = G
 $$
 
-满足上式的系数$c_i$必须满足$c_1=c_2=0$。
-
-对等式两边同时乘以$d_i^TG$：
+所以迭代公式为：
 
 $$
-c_1d_i^TGd_1+c_2d_i^TGd_2=0
+x_{k+1}=x_k -H^{-1}_k g_k =x_k -G^{-1} g_k
 $$
 
-因为共轭的定义，所以对于所有$c_jd_i^TGd_j$只要$i \neq j$都为 0，所以得到
+在形式上和**正定二次函数+精确线性搜索+最速下降法**相同。
+
+步骤为：
+
+1. 计算$g_0=\nabla f(x_0)$，计算$G^{-1}$
+2. 计算$x_{k+1}$
+3. 重复以上步骤
+
+## 4 共轭梯度法
+
+共轭条件 1（迭代方向）：
 
 $$
-c_1d_1^TGd_1=0 \\
-c_2d_2^TGd_2=0
+d_{k-1}^T G d_k=0
 $$
 
-因为$d_j$非零，且$G$正定，所以
+共轭条件 2（梯度方向）：
 
 $$
-c_j=0
+\begin{align}
+g_{k-1}^Td_{k-1}^T G d_k g_{k}^T=0 \\
+g_{k-1}^T A g_{k}^T=0
+\end{align}
 $$
 
-满足向量线性无关的定义。
+### 4.1 一般函数
 
-### 3.7 一般共轭向量法的算法
-
-1. **初始化参数**  
-   给定初始迭代点 $ x_0 \in \mathbb{R}^n $，设置初始迭代次数 $ k = 0 $；计算初始点的梯度 $ g_0 = \nabla f(x_0) $；确定初始下降方向 $ d_0 $，需满足 $ d_0^T g_0 < 0 $（保证方向为下降方向）。
-
-2. **判断迭代终止条件**  
-   计算当前迭代点 $ x_k $ 的梯度 $ g_k = \nabla f(x_k) $，若梯度的模满足 $ \|g_k\| \leq \varepsilon $（$ \varepsilon $ 为预设收敛精度阈值，$ 0 < \varepsilon \ll 1 $），则迭代终止，输出 $ x_k $ 作为近似极小点；否则进入下一步。
-
-3. **精确一维搜索求步长并更新迭代点**  
-   沿当前搜索方向 $ d_k $ 进行精确一维搜索，求解步长 $ \alpha_k $，即：
-
-   $$
-   \alpha_k = \arg\min_{\alpha > 0} f(x_k + \alpha d_k)
-   $$
-
-   利用求得的步长更新迭代点：
-
-   $$
-   x_{k+1} = x_k + \alpha_k d_k
-   $$
-
-4. **构造下一个共轭方向**  
-   计算第 $ k+1 $ 个搜索方向 $ d*{k+1} $，需满足 $ d*{k+1} $ 与前 $ k+1 $ 个方向 $ d_0, d_1, \dots, d_k $ 关于目标函数 Hesse 矩阵 $ G $ 共轭，即：
-
-   $$
-   d_{k+1}^T G d_j = 0 \quad (j = 0, 1, \dots, k)
-   $$
-
-5. **迭代循环**  
-   将迭代次数更新为 $ k := k + 1 $，返回步骤 2，重复上述流程直至满足终止条件。
-
-### 3.8 二次终止性
-
-对于正定二次函数的极小化问题有
-
-$$
-f(x)=\frac{1}{2}x^TGx-b^Tx
-$$
-
-> [!NOTE]
->
-> 为了方便计算，此处$b^T$前的符号取“-”。
-
-当该函数取到极小值时，其导数（梯度）为 0，所以计算其梯度：
-
-$$
-\nabla f(x)=Gx-b
-$$
-
-这和正定二次函数的残量$r(x)=Gx-b$ 一致。
-
-由上面的1 正定二次函数的极小化推导，我们可以知道其精确线性搜索的步长因子的显式表示为：
-
-$$
-\alpha_k= \frac{-\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
-$$
-
-事实上，
-
-$$
-\min_\alpha \varphi(\alpha)=f(x_k+\alpha d_k)=\frac{1}{2}(x_k+\alpha d_k)^TG(x_k+\alpha d_k)-b^T(x_k+\alpha d_k)
-$$
-
-得精确线性搜索最优解的终止条件：
-
-$$
-d_k^T(Gx_{k+1}-b)=0 \\
-d_k^T(G(x_k+\alpha_kd_k)-b)=0 \\
-d_k^T(Gx_k-b)+\alpha_k d_k^TGd_k=0 \\
-d_k^Tg_k+\alpha_k d_k^TGd_k=0
-$$
-
-和上面算出来的一致，这说明在精确线性搜索中，对于二次正定函数，方法是有限步终止的，即当获取到最优步长因子时，这个函数就已经获得最优解了。
-
-> [!NOTE]
->
-> 有限步终止定理
->
-> 极小化二次函数，共轭方向向量法至多经过$n$步精确线性搜索终止。
-
-### 3.9 共轭梯度法
-
-共轭梯度法是共轭方向法的一种。
-
-共轭梯度法是介于最速下降法和牛顿法之间的一个方法，它仅依靠一阶导数信息（和最速下降法有着相同的性质），避免了牛顿法需要存储和计算 Hesse 矩阵并求逆的缺点，同时也克服了最速下降法收敛速度慢的缺点。
-
-首先，共轭梯度法的每个搜索方向时共轭的，齐次，它的当前搜索方向改为依赖负梯度方向和上一次迭代的搜索方向的组合，因此避免了牛顿法需要存储和计算 Hesse 矩阵并求逆的缺点。
+#### 4.1.1 迭代方向$d_k$
 
 记
 
@@ -443,17 +328,13 @@ $$
 d_k = -g_k +\beta_{k-1} d_{k-1}
 $$
 
-因为在$k$次迭代之后，梯度$g_k$和上一次的搜索方向$d_{k-1}$已知，所以该方法的关键就是获取系数$\beta_{k-1}$。
+需要知道
 
-### 3.10 一般函数
+- 第$k$次迭代后的梯度$g_k$（当前求得）
+- 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
+- $\beta_{k-1}$（需要求取）
 
-对于一般函数，因为相邻的搜索方向满足共轭条件，所以
-
-$$
-d_{k-1}^T G d_k=0
-$$
-
-所以对于搜索方向的迭代公式就为
+**求取$\beta_{k-1}$**：
 
 $$
 \begin{align}
@@ -463,441 +344,209 @@ d_{k-1}^T Gd_k &= d_{k-1}^T G (-g_k +\beta_{k-1} d_{k-1}) \\
 \end{align}
 $$
 
-这就是 Hestenes-Stiefel 公式。
+所以迭代公式为：
 
-> [!NOTE]
->
-> 上面的公式为通用公式。下面的公式需满足**二次函数+精确线性搜索**两个条件。
+$$
+x_{k+1} = x_{k} + \alpha_{k} d_{k}
+$$
 
-### 3.11 二次函数的共轭梯度法
+需要知道：
 
-当目标函数为**任意二次函数**，因为有
+- 步长因子$\alpha_k$（**需要求取**）
+- 迭代方向$d_{k}$，如下：
+  - 第$k$次迭代后的梯度$g_k$（当前求得）
+  - 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
+  - $\beta_{k-1}$（**需要求取**）
+
+#### 4.1.2 步长因子$\alpha_k$（精确线性搜索）
+
+这里的精确线性搜索是通过带入$x_{k+1}$后，求导令其等于 0 实现求取$\alpha_k$的，所以属于精确线性搜索（但是需要已知$x_0$和$g_0$，来计算$\alpha_0$）。
+
+初始条件：$x_0$，$f(x)$
+
+1. 先求$d_0$：$d_0=-g_0$
+2. 带入$x_{1}$：$x_{1} = x_{0} + \alpha d_{0}$
+3. 计算$g_1$：$g_1 = \nabla f(x_1)$
+4. 计算$\beta_0$：$\beta_{0}=\frac{d_{0}^T G g_1}{d_{0}^T G d_{0}}$
+5. 计算$d_1$：$d_1 = -g_1 +\beta_{0} d_{0}$
+6. 重复以上步骤。
+
+### 4.2 二次函数
+
+对于一个正定二次函数：
+
+$$
+f(\boldsymbol  x)=\frac{1}{2}\boldsymbol x^TG \boldsymbol x+b^T \boldsymbol x+c
+$$
+
+根据一阶导数，就有：
 
 $$
 g_k-g_{k-1}=G(x_k-x_{k-1})=G \alpha d_{k-1}
 $$
 
-所以
+所以：
 
 $$
 \begin{align}
 \beta_{k-1}&=\frac{g_k^T G d_{k-1}}{d_{k-1}^T G d_{k-1}} \\
-&=\frac{g_k^T (g_k-g_{k-1})}{d_{k-1}^T (g_k-g_{k-1})} \quad(Crowder-Wolfe公式)\\
+&=\frac{g_k^T (g_k-g_{k-1})}{d_{k-1}^T (g_k-g_{k-1})} \quad(CW公式)\\
 \end{align}
 $$
 
-如果又在**线性精确搜索条件**下：
-
-$$
-g_k^Td_{k-1}=0
-$$
-
-所以
+计算分母：
 
 $$
 \begin{align}
 d_{k-1}^T (g_k-g_{k-1})&=(-g_{k-1} +\beta_{k-2} d_{k-2})^T(g_k-g_{k-1}) \\
-&= g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
-&= g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
-&= g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T G \alpha d_{k-1} \\
-&= g_{k-1}^T g_{k-1}+ \alpha \beta_{k-2}^T (d^T_{k-2}Gd_{k-1}) \\
-&= g_{k-1}^T g_{k-1}
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T (g_k- g_{k-1}) \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+(\beta_{k-2} d_{k-2})^T G \alpha d_{k-1} \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1}+ \alpha \beta_{k-2}^T (d^T_{k-2}Gd_{k-1}) \quad (方向共轭)  \\
+&= -g_{k-1}^Tg_{k}+g_{k-1}^T g_{k-1} \quad (梯度共轭) \\
+&=g_{k-1}^T g_{k-1}
 \end{align}
 $$
 
-还因为共轭条件导致的梯度共轭
-
-$$
-g_k^Td_{k-1}Gd^T_{k-1}g_{k-1}=0 \\
-\Downarrow \\
-g_k^TAg_{k-1}=0
-$$
-
-所以
+计算分子：
 
 $$
 \begin{align}
-g_k^T (g_k-g_{k-1})&=g_k^T g_k-g_k^T g_{k-1} \\
+g_k^T (g_k-g_{k-1})&=g_k^T g_k-g_k^T g_{k-1}  \quad (梯度共轭) \\
 &=g_k^T g_k
 \end{align}
 $$
 
-所以
+所以：
 
 $$
-\beta_{k-1} = \frac{g_k^T g_k}{g_{k-1}^T g_{k-1}} \quad (Fletcher-Reeves公式)
+\beta_{k-1} = \frac{g_k^T g_k}{g_{k-1}^T g_{k-1}} \quad (FR公式)
 $$
 
-另外一个公式叫**PRP 算法**：
+与：
 
 $$
-\beta_{k-1} = \frac{g_k^T (g_k-g_{k-1})}{g_{k-1}^T g_{k-1}}
+\beta_{k-1} = \frac{g_k^T (g_k-g_{k-1})}{g_{k-1}^T g_{k-1}} \quad (PRP公式)
 $$
 
-## 4 拟牛顿法
-
-牛顿法成功的关键是利用了 Hesse 矩阵提供的曲率信息,但计算 Hesse 矩阵工作量大,并 且有的目标函数的 Hesse 矩阵很难计算，甚至不好求出。能否仅利用目标函数值和一阶导数的信息构造出目标函数的曲率近似，使方法具有类似牛顿法的收敛速度快的优点。
-
-拟牛顿法就是这样的一类算法.由于它不需要二阶导数，拟牛顿法往往比牛顿法更有效.
-
-### 4.1 原理
-
-将最速下降法和阻尼牛顿法，统一为
+基于**正定二次函数+精确线性搜索**：
 
 $$
-x_{k+1}=x_{k}-\alpha_k H_k g_k
+x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k
 $$
 
-那么只要选取合适的$H_k$，就能做到既能逐步逼近$G^{-1}$，又不需要计算二阶导数。
-
-**其关键问题就转化为对矩阵$H_k$的选取。**
-
-那么矩阵$H_k$需要满足条件：
-
-- 对称正定
-- $H_{k+1}=H_k+E_k$，其中$E_k$的计算较为简单
-- 拟 Newton 方程
-
-### 4.2 拟 Newton 方程
-
-可以和线性搜索一样，将一个一般函数$f(x)$转换为一个关于搜索方向得函数$m(d)$并在$x_k$处展开：
+其中：
 
 $$
-f(x_k)=m_k(d)=f(x_k)+g_k^Td+\frac{1}{2}d^TB_kd_{k}
+\alpha_k = -\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k}
 $$
 
-这个二次函数得极小化条件为
+需要知道：
+
+- $x_k$
+- $g_k$
+- $d_k$：
+  - 第$k$次迭代后的梯度$g_k$（当前求得）
+  - 第$k-1$次迭代后的迭代方向$d_{k-1}$（已知）
+  - $\beta_{k-1}$：
+    - 第$k$次迭代后的梯度$g_k$（当前求得）
+    - 第$k-1$次迭代后的梯度$g_{k-1}$（已知）
+- $\alpha_k$
+  - $d_k$
+  - $g_k$
+
+**算法步骤（二次函数+精确线性搜索）**
+
+初始条件：$x_0 \in \mathbb{R}^n$，目标函数 $f(x)$，精度 $\varepsilon > 0$
+
+1. 计算初始梯度 $g_0 = \nabla f(x_0)$，若 $\|g_0\| \leq \varepsilon$，停止并输出 $x_0$；
+
+2. 初始化初始方向 $d_0 = -g_0$；
+
+3. 精确线性搜索求步长：
+   $$
+   \alpha_k = \frac{-d_k^T g_k}{d_k^T G d_k}
+   $$
+
+4. 更新迭代点：$x_{1} = x_0 + \alpha_0 d_0$；
+
+5. 计算新梯度 $g_{1} = \nabla f(x_{1})$，若 $\|g_{k+1}\| \leq \varepsilon$，停止并输出 $x_{1}$；
+
+6. 用 FR 公式（或其他简化公式）计算 $\beta_k$：
+   $$
+   \beta_k = \frac{g_{k+1}^T g_{k+1}}{g_k^T g_k}
+   $$
+
+7. 构造新共轭方向：$d_{k+1} = -g_{k+1} + \beta_k d_k$；
+
+## 5 拟牛顿法（补充完整）
+
+### 5.1 核心原理
+
+拟牛顿法通过构造 Hesse 矩阵的近似 $B_k$（或其逆 $H_k \approx B_k^{-1}$），满足拟牛顿方程 $y_k = B_{k+1} s_k$（或 $H_{k+1} y_k \approx s_k$），其中：
 
 $$
-d_k=-B_k^{-1}g_k
+s_k = x_{k+1} - x_k, \quad y_k = g_{k+1} - g_k
 $$
 
-那么迭代公式为
+迭代公式统一为：
 
 $$
-x_{k+1}=x_k-\alpha_kB_k^{-1}g_k
+x_{k+1} = x_k - \alpha_k H_k g_k
 $$
 
-对这个一般函数$f(x)$在点$x_{k+1}$处进行 Taylor 展开：
+（$\alpha_k$ 由精确线性搜索确定）
 
-$$
-f(x) \approx f(x_{k+1}) + g_{k+1}^T (x-x_{k+1}) +\frac{1}{2}(x-x_{k+1})^TG_{k+1}(x-x_{k+1})
-$$
+### 5.2 矩阵矫正方法
 
-对两边同时求导那么
+#### 5.2.1 秩 1 矫正
 
-$$
-g(x) \approx g_{k+1} +G_{k+1}(x-x_{k+1})
-$$
-
-令$x=x_k$得：
-
-$$
-g(x_k) \approx g_{k+1} +G_{k+1}(x_k-x_{k+1})
-$$
-
-再令
-
-$$
-s_k=x_{k+1}-x_k \\
-y_k = g_{k+1}-g_k
-$$
-
-那么
-
-$$
-g(x_k)-g_{k+1} \approx G_{k+1}(x_k-x_{k+1}) \\
-y_k \approx G_{k+1}s_k
-$$
-
-> [!NOTE]
->
-> 显然，如果$f(x)$是二次函数，那么上述关系式精确确定，即
->
-> $$
-> y_k = G_{k+1}s_k
-> $$
-
-但是现在并不是二次函数，所以我们需要构造一个 Hesse 矩阵$B_{k+1}$，使其近似满足这种关系，从而得到
-
-$$
-y_k = B_{k+1}s_k
-$$
-
-这就是拟牛顿方程。
-
-再令$H_k=B_k^{-1}$，那么就得到**拟牛顿方程和迭代公式**：
-
-$$
-x_{k+1}=x_{k}-\alpha_k H_k g_k \\
-H_{k+1}y_k = s_k
-$$
-
-### 4.3 $H_k$矫正
-
-#### 4.3.1 秩 1 矫正
-
-设
-
-$$
-H_{k+1}=H_k+a_k u_k u_k^T
-$$
-
-再根据拟牛顿方程$H_{k+1}y_k = s_k$可得
-
-$$
-(H_k+a_k u_k u_k^T)y_k = s_k
-$$
-
-从而
-
-$$
-a_k (u_k^Ty_k)u_k = s_k-H_ky_k
-$$
-
-直接令
-
-$$
-u_k=s_k-H_ky_k
-$$
-
-那么
-
-$$
-a_k=\frac{1}{(s_k-H_ky_k)^Ty_k}
-$$
+矫正公式：
 
 $$
 H_{k+1} = H_k + \frac{(s_k - H_k y_k)(s_k - H_k y_k)^T}{(s_k - H_k y_k)^T y_k}
 $$
 
-使其近似$G^{-1}$。
+其中 $u_k = s_k - H_k y_k$，核心是通过秩 1 修正使 $H_{k+1}$ 满足拟牛顿方程，但无法保证正定性。
 
-#### 4.3.2 DFP 矫正
+#### 5.2.2 DFP 矫正（秩 2 矫正）
 
-秩 1 校正公式不能保证$ H_k $的正定性，从而不能保证得到的方向是下降的。
-
-下面考虑秩 2 校正：
-
-$$
-H_{k+1} = H_k + a_k u_k u_k^T + b_k v_k v_k^T
-$$
-
-根据拟 Newton 方程$ H\_{k+1} y_k = s_k $有：
-
-$$
-(H_k + a_k u_k u_k^T + b_k v_k v_k^T) y_k = s_k
-$$
-
-即
-
-$$
-a_k (u_k^T y_k) u_k + b_k (v_k^T y_k) v_k = s_k - H_k y_k
-$$
-
-可取 $ u_k = s_k $，$ v_k = H_k y_k $，可得 DFP 修正公式：
+矫正公式：
 
 $$
 H_{k+1} = H_k - \frac{H_k y_k y_k^T H_k}{y_k^T H_k y_k} + \frac{s_k s_k^T}{y_k^T s_k}
 $$
 
-> [!NOTE]
->
-> 我们会发现这里和上面得秩 1 矫正一样，是直接指定$u$和$v$的值的，所以在 DFP 矫正中
->
-> $$
-> a_ku_k^Ty_k=1 \\
-> b_kv_k^Ty_k=-1
-> $$
->
-> 在秩 1 矫正中
->
-> $$
-> a_ku_k^Ty_k=1
-> $$
+性质：若 $H_k$ 正定且 $y_k^T s_k > 0$，则 $H_{k+1}$ 正定，保证搜索方向为下降方向。
 
-#### 4.3.3 BFGS 矫正
+#### 5.2.3 BFGS 矫正（秩 2 矫正）
+
+对 Hesse 矩阵 $B_k$ 的矫正公式：
 
 $$
 B_{k+1} = B_k - \frac{B_k s_k s_k^T B_k}{s_k^T B_k s_k} + \frac{y_k y_k^T}{s_k^T y_k}
 $$
 
-只要将$H \leftrightarrow B$和$s\leftrightarrow y$，即可得到 DFP 矫正。
+若需转换为 $H_{k+1} \approx B_{k+1}^{-1}$，可通过矩阵求逆公式推导，与 DFP 矫正呈对偶关系。
 
-## 5. DFP 矫正的性质
+### 5.3 算法步骤（DFP 矫正+精确线性搜索）
 
-### 5.1 正定继承性
+初始条件：$x_0 \in \mathbb{R}^n$，目标函数 $f(x)$，精度 $\varepsilon > 0$，初始近似矩阵 $H_0 = I$（单位矩阵）
 
-> [!NOTE]
->
-> 正定矩阵的定义：假设实对称矩阵$A$满足对于任意非零向量$x$，都有$x^TAx>0$，则称矩阵$A$为正定矩阵。
+1. 计算梯度 $g_0 = \nabla f(x_0)$，若 $\|g_0\| \leq \varepsilon$，停止并输出 $x_0$；
+2. 确定搜索方向：$d_0 = -H_0 g_0$；
+3. 精确线性搜索求步长 $\alpha_0$：$\alpha_0 = \arg\min_{\alpha > 0} f(x_0 + \alpha d_0)$；
+4. 更新迭代点：$x_1 = x_0 + \alpha_0 d_0$；
+5. 计算 $s_0 = x_1 - x_0$，$g_1 = \nabla f(x_1)$，$y_0 = g_1 - g_0$；
+6. 若 $\|g_1\| \leq \varepsilon$，停止并输出 $x_1$；
+7. DFP 矫正更新 $H_1$：
+   $$
+   H_1 = H_0 - \frac{H_0 y_0 y_0^T H_0}{y_0^T H_0 y_0} + \frac{s_0 s_0^T}{y_0^T s_0}
+   $$
+8. 令 $k = k+1$，返回步骤 2，重复计算 $d_k = -H_k g_k$ 及后续步骤。
 
-上面我们知道$H_{k+1}y_k = s_k$，所以$y_k^TH_{k+1}y_k=y_k^Ts_k$，如果$H_{k}$的正定性能传递给$H_{k+1}$，那么有结论：
+### 5.4 二次函数特例
 
-如果$H_{k+1}$正定，那么$y_k^Ts_k>0$。
+对于正定二次函数 $f(x) = \frac{1}{2}x^T G x + b^T x + c$，拟牛顿方程精确成立（$y_k = G s_k$，即$B_k=G$），且：
 
-所以证明：
-
-假设$H_k$正定，那么由 DFP 修正公式得到的矩阵为：
-
-$$
-H_{k+1} = H_k - \frac{H_k y_k y_k^T H_k}{y_k^T H_k y_k} + \frac{s_k s_k^T}{y_k^T s_k}
-$$
-
-如果$H_{k+1}$也正定，则
-
-$$
-y_k^TH_{k+1}y_k=y_k^TH_ky_k - \frac{y_k^T H_k y_k y_k^T H_k y_k}{y_k^T H_k y_k} + \frac{y_k^T s_k s_k^T y_k}{y_k^T s_k}=s_k^Ty_k >0
-$$
-
-> [!NOTE]
->
-> 上面我们知道$H_{k+1}y_k = s_k$，所以$y_k^TH_{k+1}y_k=y_k^Ts_k$
-
-那么反过来，结论：
-
-只要有$s_k^Ty_k >0$，那么$H_{k+1}$就正定。
-
-所以证明：
-
-对由 DFP 修正公式得到的矩阵进行同步操作：
-
-$$
-\begin{align}
-z^TH_{k+1}z &= z^TH_kz - \frac{z^T H_k y_k y_k^T H_k z}{y_k^T H_k y_k} + \frac{z^T s_k s_k^T z}{y_k^T s_k} \\
-&= \frac{(z^T H_k z)(y_k^T H_k y_k) - (z^T H_k y_k)(y_k^T H_k z)}{y_k^T H_k y_k} + \frac{z^T s_k s_k^T z}{y_k^T s_k}
-\end{align}
-$$
-
-因为$H_k$正定，所以存在正定矩阵$D$，使得
-
-$$
-H_k=DD^T
-$$
-
-再令$u=Dz$，$v=Dy_k$，那么
-
-$$
-z^TH_{k+1}z = \frac{(u^T u)(v^T v) - (u^T v)(v^T u)}{v^T v} + \frac{z^T s_k s_k^T z}{y_k^T s_k}
-$$
-
-根据 Cauchy-Schwartz 不等式（$A$正定）：
-
-$$
-|x^Ty| \leq (x^TAx)^{\frac{1}{2}}(y^TAy)^{\frac{1}{2}}
-$$
-
-所以
-
-$$
-(x^Ty)^2 \leq (x^TAx)(y^TAy)
-$$
-
-所以
-
-$$
-z^TH_{k+1}z \geq \frac{z^T s_k s_k^T z}{y_k^T s_k}
-$$
-
-又因为$y_k^T s_k > 0$，$z^T s_k s_k^T z \neq 0$​，所以
-
-$$
-z^TH_{k+1}z > 0
-$$
-
-$H_{k+1}$正定。
-
-结论：
-
-$$
-y_k^T s_k > 0 \leftrightarrow H正定
-$$
-
-### 5.2 二次终止性
-
-因为共轭梯度法具有二次终止性，所以我们只要证明在使用 DFP 矫正时，也具有共轭性质即可。
-
-即证明，当面对正定二次函数时
-
-$$
-d_k^TGd_{k+1}=0
-$$
-
-因为 DFP 算法具有如下等式：
-
-$$
-s_k=x_{k+1}-x_k=\alpha_kd_k \\
-y_k = g_{k+1}-g_k=Gs_k \\
-d_k=-B_k^{-1}g_k=H_kg_k \\
-H_{k+1}y_k = s_k
-$$
-
-所以
-
-$$
-\begin{align}
-d_k^TGd_{k+1} &= (Gd_k)^Td_{k+1}\\
-&= -\frac{1}{\alpha_k}(Gs_k)^TH_{k+1}g_{k+1} \\
-&= -\frac{1}{\alpha_k}y_k^TH_{k+1}g_{k+1} \\
-&= -\frac{1}{\alpha_k} s_k^T g_{k+1} \\
-&=-d_kg_{k+1}^T
-\end{align}
-$$
-
-在精确线性搜索的条件下
-
-$$
-d_kg_{k+1}^T=0
-$$
-
-所以
-
-$$
-d_k^TGd_{k+1} =0
-$$
-
-所以 DFP 也具有二次终止性，也是一种方向共轭的方法。
-
-### 5.3 搜索方向
-
-## 5.3.1 DFP算法的搜索方向
-
-下面研究精确一维搜索时，DFP 方法中第$ k+1 $步的下降方向。
-
-根据 $ g\_{k+1}^T d_k = 0 $ 得：
-
-$$
-g_{k+1}^T s_k = g_{k+1}^T (x_{k+1} - x_k) = 0
-$$
-
-其中 $ x\_{k+1} = x_k + \alpha_k d_k $。
-
-首先给出 $ H*{k+1}^{(DFP)} g*{k+1} $ 的表达式：
-
-$$
-H_{k+1}^{(DFP)} g_{k+1} = H_k g_{k+1} - \frac{H_k y_k y_k^T H_k g_{k+1}}{y_k^T H_k y_k} + \frac{s_k s_k^T g_{k+1}}{y_k^T s_k}
-$$
-
-由于 $ g\_{k+1}^T s_k = 0 $，上式可简化为：
-
-$$
-H_{k+1}^{(DFP)} g_{k+1} = H_k g_{k+1} - \frac{H_k y_k y_k^T H_k g_{k+1}}{y_k^T H_k y_k}
-$$
-
-对 $ H*k g*{k+1} $ 进行变形：
-
-$$
-H_k g_{k+1} = H_k (g_{k+1} - g_k) + H_k g_k = H_k y_k - p_k = H_k y_k - \alpha_k^{-1} s_k
-$$
-
-将 $ H*k g*{k+1} $ 代入 $ H*{k+1}^{DFP} g*{k+1} $ 的表达式：
-
-$$
-H_{k+1}^{DFP} g_{k+1} = H_k y_k - \alpha_k^{-1} s_k - \frac{H_k y_k y_k^T (H_k y_k - \alpha_k^{-1} s_k)}{y_k^T H_k y_k}
-$$
-
-进一步化简可得：
-
-$$
-H_{k+1}^{DFP} g_{k+1} = \frac{y_k^T s_k H_k y_k}{\alpha_k y_k^T H_k y_k} - \frac{s_k}{\alpha_k}
-$$
+1. DFP 矫正具有二次终止性，至多经过 $n$ 次迭代收敛到最优解。
