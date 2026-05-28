@@ -145,9 +145,8 @@ $$
 x_{k+1}=x_k-\frac{\boldsymbol d_k^T \boldsymbol g_{k}}{ \boldsymbol d_k^TG \boldsymbol d_k} d_k \quad  (正定二次函数+精确线性搜索) \tag{3}
 $$
 
-> [!CAUTION]
->
-> 后面我们默认使用精确线性搜索来简化步长因子的计算。
+> **CAUTION** 后面我们默认使用精确线性搜索来简化步长因子的计算。
+{: .prompt-danger }
 
 ## 2 最速下降法
 
